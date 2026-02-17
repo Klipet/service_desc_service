@@ -1,0 +1,63 @@
+﻿using DevExpress.Xpo;
+
+[Persistent("User")]
+public class User: XPObject
+{
+    public User(Session session) : base(session){}
+    private int _id;
+    private string _name;
+    private string _firstName;
+    private string _email;
+    private string _password;
+    private string _phone;
+    private string _loghin;
+    private string _workSpace;
+    private DateTime _dateCreated;
+
+    public int Id
+    {
+        get { return _id; }
+        set { _id = value; }
+    }
+    public string Name
+    {
+        get => _name;
+        set => SetPropertyValue(nameof(Name), ref _name, value);
+    }
+    public string FirstName
+    {
+        get => _firstName;
+        set => SetPropertyValue(nameof(FirstName), ref _firstName, value);
+    }
+    public string Email
+    {
+        get => _email;
+        set => SetPropertyValue(nameof(Email), ref _email, value);
+    }
+    public string Password
+    {
+        get => _password;
+        set => SetPropertyValue(nameof(Password), ref _password, value);
+    }
+    public string Phone
+    {
+        get => _phone;
+        set => SetPropertyValue(nameof(Phone), ref _phone, value);
+    }
+    public string Loghin
+    {
+        get => _loghin;
+        set => SetPropertyValue(nameof(Loghin), ref _loghin, value);
+    }
+    public string WorkSpace
+    {
+        get => _workSpace;
+        set => SetPropertyValue(nameof(WorkSpace), ref _workSpace, value);
+    }
+    public DateTime DateCreated
+    {
+        get => _dateCreated;
+        set => SetPropertyValue(nameof(DateCreated), ref _dateCreated, value);
+    }
+}
+

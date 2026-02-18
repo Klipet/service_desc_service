@@ -11,14 +11,17 @@ public class User: XPObject
     private string _password;
     private string _phone;
     private string _loghin;
-    private string _workSpace;
+    private WorkSpace _workSpace;
     private DateTime _dateCreated;
 
-    public int Id
-    {
-        get { return _id; }
-        set { _id = value; }
-    }
+
+    [Association("User-Tikets")]
+    public XPCollection<NewTiket> Tikets => GetCollection<NewTiket>(nameof(Tikets));
+//    public int Id
+//    {
+//        get => _id;
+//        set => SetPropertyValue(nameof(Id), ref _id, value);
+//    }
     public string Name
     {
         get => _name;
@@ -49,7 +52,8 @@ public class User: XPObject
         get => _loghin;
         set => SetPropertyValue(nameof(Loghin), ref _loghin, value);
     }
-    public string WorkSpace
+    [Association("WorkSpace-User")]
+    public WorkSpace WorkSpace
     {
         get => _workSpace;
         set => SetPropertyValue(nameof(WorkSpace), ref _workSpace, value);

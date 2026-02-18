@@ -3,6 +3,7 @@ using DevExpress.Data.Filtering;
 using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -19,14 +20,13 @@ public class NewTiketController : ControllerBase
     {
         try
         {
-            using var uow = MyXPO.GetNewUnitOfWork();
 
             var tikets = _uow.Query<NewTiket>().ToList();
-
             Console.WriteLine($"Найдено тикетов: {tikets.Count}");
 
             var result = tikets.Select(t => new NewTiketDto
             {
+                Id = t.Id,    
                 Title = t.Title,
                 Description = t.Description,
                 Author = t.Author,
@@ -37,8 +37,9 @@ public class NewTiketController : ControllerBase
                 State = t.State,
                 TypeTiket = t.TypeTiket,
                 Platform = t.Platform,
-                WorkSpace = t.WorkSpace,
-                User = t.User,
+                WorkSpaceName = t.WorkSpace.Name ,
+                UserId = t.User?.Oid ?? 0,       
+                UserName = t.User?.Name ?? "",
                 Preorety = t.Preorety,
                 DataPhone = t.DataPhone,
                 ResaultPhone = t.ResaultPhone,
@@ -60,10 +61,21 @@ public class NewTiketController : ControllerBase
     [HttpPost]
     public IActionResult Create([FromBody] NewTiketDto model)
     {
+        using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null)
             return BadRequest("Data is null");
+        Console.WriteLine($"UserId из запроса: {model.UserId}");
+        var user = uow.Query<User>().FirstOrDefault(u => u.Oid == model.UserId);
+        if (user == null)
+            return NotFound("Пользователь не найден");
 
-        var ticket = new NewTiket(_uow)
+
+        var wp = uow.Query<WorkSpace>().FirstOrDefault(u => u.Oid == model.WorkSpaceId);
+        if (wp == null)
+            return NotFound("Пользователь не найден");
+
+
+        var ticket = new NewTiket(uow)
         {
             Title = model.Title,
             Description = model.Description,
@@ -75,8 +87,8 @@ public class NewTiketController : ControllerBase
             State = model.State,
             TypeTiket = model.TypeTiket,
             Platform = model.Platform,
-            WorkSpace = model.WorkSpace,
-            User = model.User,
+            WorkSpace = wp,
+            User = user,
             Preorety = model.Preorety,
             DataPhone = model.DataPhone,
             ResaultPhone = model.ResaultPhone,
@@ -88,7 +100,7 @@ public class NewTiketController : ControllerBase
         };
         try
         {
-            _uow.CommitChanges();
+            uow.CommitChanges();
         }
         catch (Exception ex) {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
@@ -105,8 +117,9 @@ public class NewTiketController : ControllerBase
             State = ticket.State,
             TypeTiket = ticket.TypeTiket,
             Platform = ticket.Platform,
-            WorkSpace = ticket.WorkSpace,
-            User = ticket.User,
+            WorkSpaceName = ticket.WorkSpace.Name,
+            UserName = user.Name,
+            UserId = user.Oid,
             Preorety = ticket.Preorety,
             DataPhone = ticket.DataPhone,
             ResaultPhone = ticket.ResaultPhone,
@@ -123,14 +136,21 @@ public class NewTiketController : ControllerBase
     [HttpGet("{id}", Name = "GetTiketById")]
     public IActionResult GetById(int id)
     {
-
-
-
         var tiket = _uow.GetObjectByKey<NewTiket>(id);
         if(tiket == null) return NotFound();
 
+
+        var user = _uow.GetObjectByKey<User>(tiket.User);
+        if (user == null)
+            return NotFound("Пользователь не найден");
+
+        var wp = _uow.GetObjectByKey<WorkSpace>(tiket.WorkSpace);
+        if (wp == null)
+            return NotFound("Пользователь не найден");
+
         var tiketDto = new NewTiketDto
         {
+            Id = tiket.Id, 
             Title = tiket.Title,
             Description = tiket.Description,
             Author = tiket.Author,
@@ -141,8 +161,8 @@ public class NewTiketController : ControllerBase
             State = tiket.State,
             TypeTiket = tiket.TypeTiket,
             Platform = tiket.Platform,
-            WorkSpace = tiket.WorkSpace,
-            User = tiket.User,
+            WorkSpaceName = wp.Name,
+            UserId = user.Oid,
             Preorety = tiket.Preorety,
             DataPhone = tiket.DataPhone,
             ResaultPhone = tiket.ResaultPhone,
@@ -157,7 +177,55 @@ public class NewTiketController : ControllerBase
         return Ok(tiketDto);
 
     }
+    [HttpPut("{id}")]
+    public IActionResult Update(int id, [FromBody] NewTiketDto dto)
+    {
+        try
+        {
+            
+            var tiket = _uow.Query<NewTiket>().FirstOrDefault(t => t.Id == id);
 
+            if (tiket == null)
+                return NotFound($"Тикет с Id {id} не найден");
+
+            // находим пользователя по UserId из dto
+            var user = _uow.Query<User>().FirstOrDefault(u => u.Oid == dto.UserId);
+            if (user == null)
+                return NotFound("Пользователь не найден");
+            var wp = _uow.Query<WorkSpace>().FirstOrDefault(u => u.Oid == dto.WorkSpaceId);
+            if (wp == null)
+                return NotFound("Пользователь не найден");
+
+            tiket.Title = dto.Title;
+            tiket.Description = dto.Description;
+            tiket.Author = dto.Author;
+            tiket.Category = dto.Category;
+            tiket.Phone = dto.Phone;
+            tiket.Company = dto.Company;
+            tiket.SubCategory = dto.SubCategory;
+            tiket.State = dto.State;
+            tiket.TypeTiket = dto.TypeTiket;
+            tiket.Platform = dto.Platform;
+            tiket.WorkSpace = wp;
+            tiket.User = user;
+            tiket.Preorety = dto.Preorety;
+            tiket.DataPhone = dto.DataPhone;
+            tiket.ResaultPhone = dto.ResaultPhone;
+            tiket.DateSecondPhone = dto.DateSecondPhone;
+            tiket.BugNumber = dto.BugNumber;
+            tiket.BugTransfer = dto.BugTransfer;
+            tiket.Mode = dto.Mode;
+            tiket.DataCreted = dto.DataCreted;
+
+            _uow.CommitChanges();
+
+            return Ok($"Tiket {id} update");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(ex.HResult, $"Ошибка при обновлении: {ex.Message}");
+        }
+    }
 
 
 
@@ -169,7 +237,7 @@ public class NewTiketController : ControllerBase
         {
             // Ищем через сессию явно
             var ticket = _uow.Query<NewTiket>()
-            .FirstOrDefault(t => t.Oid == id);
+            .FirstOrDefault(t => t.Id == id);
 
      
             if (ticket == null)

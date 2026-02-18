@@ -1,6 +1,6 @@
 ﻿public class UserDto
 {
-    public int Id { get; set; }
+    public int Oid { get; set; }
     public string Name { get; set; }
     public string FirstName { get; set; }
     public string Email { get; set; }
@@ -8,5 +8,7 @@
     public string Phone { get; set; }
     public string Loghin { get; set; }
     public DateTime DateCreated { get; set; }
-    public string WorkSpace { get; set; }
+    //workSpace
+    public int WorkSpaceId { get; set; }
+    public String WorkSpaceName { get; set; }
 }

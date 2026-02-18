@@ -1,6 +1,4 @@
-﻿
-
-public class NewTiketDto
+﻿public class NewTiketDto
     {
     public int Id { get; set; }
     public string Title { get; set; }
@@ -13,8 +11,6 @@ public class NewTiketDto
     public string State { get; set; }
     public string TypeTiket { get; set; }
     public string Platform { get; set; }
-    public string WorkSpace { get; set; }
-    public string User { get; set; }
     public string Preorety { get; set; }
     public DateTime DataPhone { get; set; }
     public bool ResaultPhone { get; set; }
@@ -24,5 +20,13 @@ public class NewTiketDto
     public string Mode { get; set; }
     public DateTime DataCreted { get; set; }
 
-    }
+    // User
+    public int UserId { get; set; }  // ← для получения от клиента
+    public string UserName { get; set; }  // ← для отдачи клиенту
+
+    //workSpace
+    public int WorkSpaceId { get; set; } // WorkSpace
+    public String WorkSpaceName { get; set; }
+
+}
 

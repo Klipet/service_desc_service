@@ -1,9 +1,11 @@
 ﻿using DevExpress.Xpo;
     [Persistent("NewTiket")]
-    public class NewTiket : XPObject
-    {
+[DeferredDeletion(false)]
+
+public class NewTiket : XPLiteObject
+{
         public NewTiket(Session session) : base(session) { }
-        private string _id;
+        private int _id;
         private string _title;
         private string _description;
         private string _company;
@@ -13,8 +15,7 @@
         private string _typeTiket;
         private string _author;
         private string _platform;
-        private string _workSpace;
-        private string _user;
+        private WorkSpace _workSpace;
         private string _preority;
         private string _phone;
         private bool _resaultPhone;
@@ -24,13 +25,15 @@
         private string _bugNumber;
         private string _mode;
         private DateTime _dataCreated;
+        private User _user;
 
 
-        public string Id
-        {
-            get { return _id; } 
-            set { _id = value; }
-        }
+    [Key(AutoGenerate = true)]
+    public int Id
+    {
+        get => _id;
+        set => SetPropertyValue(nameof(Id), ref _id, value);
+         }
         public string Title
         {
             get => _title;
@@ -77,12 +80,15 @@
             get => _platform;
             set => SetPropertyValue(nameof(Platform), ref _platform, value);
         }
-        public string WorkSpace
+    [Association("WorkSpace-NewTikets")]
+        public WorkSpace WorkSpace
         {
             get => _workSpace;
             set => SetPropertyValue(nameof(WorkSpace), ref _workSpace, value);
         }
-        public string User
+
+        [Association("User-Tikets")]
+        public User User
         {
             get => _user;
             set => SetPropertyValue(nameof(User), ref _user, value);

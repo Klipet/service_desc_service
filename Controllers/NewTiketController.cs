@@ -30,23 +30,24 @@ public class NewTiketController : ControllerBase
                 Title = t.Title,
                 Description = t.Description,
                 Author = t.Author,
-                Category = t.Category,
+                CategoryName = t.Category.Name,
                 Phone = t.Phone,
                 Company = t.Company,
-                SubCategory = t.SubCategory,
-                State = t.State,
-                TypeTiket = t.TypeTiket,
+                SubCategoryName = t.SubCategory.Name,
+                StateName = t.State.Name,
+                StateId = t.State.Oid,
+                TypeTiketName = t.TypeTiket.Name,
                 Platform = t.Platform,
                 WorkSpaceName = t.WorkSpace.Name ,
                 UserId = t.User?.Oid ?? 0,       
                 UserName = t.User?.Name ?? "",
-                Preorety = t.Preorety,
+                PreorityName = t.Preorety.Name,
                 DataPhone = t.DataPhone,
                 ResaultPhone = t.ResaultPhone,
                 DateSecondPhone = t.DateSecondPhone,
                 BugNumber = t.BugNumber,
                 BugTransfer = t.BugTransfer,
-                Mode = t.Mode,
+                ModeName = t.Mode.Name,
                 DataCreted = t.DataCreted
             }).ToList();
 
@@ -62,17 +63,17 @@ public class NewTiketController : ControllerBase
     public IActionResult Create([FromBody] NewTiketDto model)
     {
         using var uow = MyXPO.GetNewUnitOfWork();
-        if (model == null)
-            return BadRequest("Data is null");
-        Console.WriteLine($"UserId из запроса: {model.UserId}");
-        var user = uow.Query<User>().FirstOrDefault(u => u.Oid == model.UserId);
-        if (user == null)
-            return NotFound("Пользователь не найден");
+        if (model == null) return BadRequest("Data is null");
 
+        var user = GetOrFail<User>(uow, model.UserId, "User");
+        var wp = GetOrFail<WorkSpace>(uow, model.WorkSpaceId, "WorkSpace");
+        var st = GetOrFail<State>(uow, model.StateId, "State");
+        var tt = GetOrFail<TiketType>(uow, model.TypeTiketId, "TiketType");
+        var pr = GetOrFail<Preority>(uow, model.PreorityId, "Preority");
+        var md = GetOrFail<Mode>(uow, model.ModeId, "Mode");
+        var sc = GetOrFail<SubCategory>(uow, model.SubCategoryId, "SubCategory");
+        var cat = GetOrFail<Category>(uow, model.CategoryId, "Category");
 
-        var wp = uow.Query<WorkSpace>().FirstOrDefault(u => u.Oid == model.WorkSpaceId);
-        if (wp == null)
-            return NotFound("Пользователь не найден");
 
 
         var ticket = new NewTiket(uow)
@@ -80,22 +81,22 @@ public class NewTiketController : ControllerBase
             Title = model.Title,
             Description = model.Description,
             Author = model.Author,
-            Category = model.Category,
+            Category = cat,
             Phone = model.Phone,
             Company = model.Company,
-            SubCategory = model.SubCategory,
-            State = model.State,
-            TypeTiket = model.TypeTiket,
+            SubCategory = sc,
+            State = st,
+            TypeTiket = tt,
             Platform = model.Platform,
             WorkSpace = wp,
             User = user,
-            Preorety = model.Preorety,
+            Preorety = pr,
             DataPhone = model.DataPhone,
             ResaultPhone = model.ResaultPhone,
             DateSecondPhone = model.DateSecondPhone,
             BugNumber = model.BugNumber,
             BugTransfer = model.BugTransfer,
-            Mode = model.Mode,
+            Mode = md,
             DataCreted = DateTime.UtcNow
         };
         try
@@ -110,24 +111,24 @@ public class NewTiketController : ControllerBase
             Title = ticket.Title,
             Description = ticket.Description,
             Author = ticket.Author,
-            Category = ticket.Category,
+            CategoryName = cat.Name,
             Phone = ticket.Phone,
             Company = ticket.Company,
-            SubCategory = ticket.SubCategory,
-            State = ticket.State,
-            TypeTiket = ticket.TypeTiket,
+            SubCategoryName = sc.Name,
+            StateName = st.Name,
+            TypeTiketName = tt.Name,
             Platform = ticket.Platform,
             WorkSpaceName = ticket.WorkSpace.Name,
             UserName = user.Name,
             UserId = user.Oid,
-            Preorety = ticket.Preorety,
+            PreorityName = pr.Name,
             DataPhone = ticket.DataPhone,
             ResaultPhone = ticket.ResaultPhone,
             DateSecondPhone = ticket.DateSecondPhone,
             BugNumber = ticket.BugNumber,
             BugTransfer = ticket.BugTransfer,
-            Mode = ticket.Mode,
-            DataCreted = DateTime.UtcNow
+            ModeId = md.Oid,
+            DataCreted = ticket.DataCreted,
         };
      //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
          return Ok(resault);
@@ -140,13 +141,14 @@ public class NewTiketController : ControllerBase
         if(tiket == null) return NotFound();
 
 
-        var user = _uow.GetObjectByKey<User>(tiket.User);
-        if (user == null)
-            return NotFound("Пользователь не найден");
-
-        var wp = _uow.GetObjectByKey<WorkSpace>(tiket.WorkSpace);
-        if (wp == null)
-            return NotFound("Пользователь не найден");
+        var user = _uow.GetObjectByKey<User>(tiket.User) ?? throw new KeyNotFoundException("Пользователь не найден");
+        var wp = _uow.GetObjectByKey<WorkSpace>(tiket.WorkSpace) ?? throw new KeyNotFoundException("WorkSpace не найден");
+        var st = _uow.GetObjectByKey<State>(tiket.State) ?? throw new KeyNotFoundException("State не найден");
+        var tt = _uow.GetObjectByKey<TiketType>(tiket.TypeTiket) ?? throw new KeyNotFoundException("TiketType не найден");
+        var pr = _uow.GetObjectByKey<Preority>(tiket.Preorety) ?? throw new KeyNotFoundException("Preority не найден");
+        var md = _uow.GetObjectByKey<Mode>(tiket.Mode) ?? throw new KeyNotFoundException("Mode не найден");
+        var sc = _uow.GetObjectByKey<SubCategory>(tiket.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
+        var cat = _uow.GetObjectByKey<Category>(tiket.Category) ?? throw new KeyNotFoundException("Category не найден");
 
         var tiketDto = new NewTiketDto
         {
@@ -154,22 +156,22 @@ public class NewTiketController : ControllerBase
             Title = tiket.Title,
             Description = tiket.Description,
             Author = tiket.Author,
-            Category = tiket.Category,
+            CategoryName = cat.Name,
             Phone = tiket.Phone,
             Company = tiket.Company,
-            SubCategory = tiket.SubCategory,
-            State = tiket.State,
-            TypeTiket = tiket.TypeTiket,
+            SubCategoryName = sc.Name,
+            StateName = st.Name,
+            TypeTiketName = tt.Name,
             Platform = tiket.Platform,
             WorkSpaceName = wp.Name,
             UserId = user.Oid,
-            Preorety = tiket.Preorety,
+            PreorityId = pr.Oid,
             DataPhone = tiket.DataPhone,
             ResaultPhone = tiket.ResaultPhone,
             DateSecondPhone = tiket.DateSecondPhone,
             BugNumber = tiket.BugNumber,
             BugTransfer = tiket.BugTransfer,
-            Mode = tiket.Mode,
+            ModeName = md.Name,
             DataCreted = tiket.DataCreted
 
         };
@@ -185,36 +187,36 @@ public class NewTiketController : ControllerBase
             
             var tiket = _uow.Query<NewTiket>().FirstOrDefault(t => t.Id == id);
 
-            if (tiket == null)
-                return NotFound($"Тикет с Id {id} не найден");
+            if (tiket == null) return NotFound($"Тикет с Id {id} не найден");
 
-            // находим пользователя по UserId из dto
-            var user = _uow.Query<User>().FirstOrDefault(u => u.Oid == dto.UserId);
-            if (user == null)
-                return NotFound("Пользователь не найден");
-            var wp = _uow.Query<WorkSpace>().FirstOrDefault(u => u.Oid == dto.WorkSpaceId);
-            if (wp == null)
-                return NotFound("Пользователь не найден");
+            var user = GetOrFail<User>(_uow, tiket.User.Oid, "Пользователь");
+            var wp = GetOrFail<WorkSpace>(_uow, tiket.WorkSpace.Oid, "WorkSpace");
+            var st = GetOrFail<State>(_uow, tiket.State.Oid, "State");
+            var tt = GetOrFail<TiketType>(_uow, tiket.TypeTiket.Oid, "TiketType");
+            var pr = GetOrFail<Preority>(_uow, tiket.Preorety.Oid, "Preority");
+            var md = GetOrFail<Mode>(_uow, tiket.Mode.Oid, "Mode");
+            var sc = GetOrFail<SubCategory>(_uow, tiket.SubCategory.Oid, "SubCategory");
+            var cat = GetOrFail<Category>(_uow, tiket.SubCategory.Oid, "Category");
 
             tiket.Title = dto.Title;
             tiket.Description = dto.Description;
             tiket.Author = dto.Author;
-            tiket.Category = dto.Category;
+            tiket.Category = cat;
             tiket.Phone = dto.Phone;
             tiket.Company = dto.Company;
-            tiket.SubCategory = dto.SubCategory;
-            tiket.State = dto.State;
-            tiket.TypeTiket = dto.TypeTiket;
+            tiket.SubCategory = sc;
+            tiket.State = st;
+            tiket.TypeTiket = tt;
             tiket.Platform = dto.Platform;
             tiket.WorkSpace = wp;
             tiket.User = user;
-            tiket.Preorety = dto.Preorety;
+            tiket.Preorety = pr;
             tiket.DataPhone = dto.DataPhone;
             tiket.ResaultPhone = dto.ResaultPhone;
             tiket.DateSecondPhone = dto.DateSecondPhone;
             tiket.BugNumber = dto.BugNumber;
             tiket.BugTransfer = dto.BugTransfer;
-            tiket.Mode = dto.Mode;
+            tiket.Mode = md;
             tiket.DataCreted = dto.DataCreted;
 
             _uow.CommitChanges();
@@ -254,4 +256,13 @@ public class NewTiketController : ControllerBase
             return StatusCode(500, $"Ошибка при удалении: {ex.Message}");
         }
     }
+
+    private T GetOrFail<T>(UnitOfWork uow, int id, string entityName) where T : XPObject
+    {
+        var entity = uow.Query<T>().FirstOrDefault(e => e.Oid == id);
+        if (entity == null)
+            throw new KeyNotFoundException($"{entityName} не найден");
+        return entity;
+    }
+
 }

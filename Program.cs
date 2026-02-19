@@ -22,10 +22,14 @@ using DevExpress.Xpo.DB;
                 return MyXPO.GetNewUnitOfWork();
             });
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddSingleton<S3Service>();
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())

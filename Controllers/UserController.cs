@@ -44,7 +44,7 @@ public class UserController: ControllerBase
 
         var wp = _uow.Query<WorkSpace>().FirstOrDefault(u => u.Oid == userModel.WorkSpaceId);
         if (wp == null)
-            return NotFound("Пользователь не найден");
+            return NotFound("Рабочее место не найдено не найден");
 
         var user = new User(_uow)
         {

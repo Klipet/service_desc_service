@@ -1,5 +1,5 @@
 ﻿using DevExpress.Xpo;
-    [Persistent("NewTiket")]
+[Persistent("NewTiket")]
 [DeferredDeletion(false)]
 
 public class NewTiket : XPLiteObject
@@ -9,21 +9,21 @@ public class NewTiket : XPLiteObject
         private string _title;
         private string _description;
         private string _company;
-        private string _category;
-        private string _subCategory;
-        private string _state;
-        private string _typeTiket;
+        private Category _category;
+        private SubCategory _subCategory;
+        private State _state;
+        private TiketType _typeTiket;
         private string _author;
         private string _platform;
         private WorkSpace _workSpace;
-        private string _preority;
+        private Preority _preority;
         private string _phone;
         private bool _resaultPhone;
         private DateTime _dataPhone;
         private DateTime _dateSecondPhone;
         private bool _bugTransfer;
         private string _bugNumber;
-        private string _mode;
+        private Mode _mode;
         private DateTime _dataCreated;
         private User _user;
 
@@ -50,22 +50,26 @@ public class NewTiket : XPLiteObject
             get => _company;
             set => SetPropertyValue(nameof(Company), ref _company, value);
         }
-        public string Category
+    [Association("Category-Tikets")]
+    public Category Category
         {
             get => _category;
             set => SetPropertyValue(nameof(Category), ref _category, value);
         }
-        public string SubCategory
+    [Association("SubCategory-Tikets")]
+    public SubCategory SubCategory
         {
             get => _subCategory;
             set => SetPropertyValue(nameof(SubCategory), ref _subCategory, value);
         }
-        public string State
+    [Association("State-Tikets")]
+    public State State
         {
             get => _state;
             set => SetPropertyValue(nameof(State), ref _state, value);
         }
-        public string TypeTiket
+    [Association("TiketType-Tikets")]
+    public TiketType TypeTiket
         {
             get => _typeTiket;
             set => SetPropertyValue(nameof(TypeTiket), ref _typeTiket, value);
@@ -80,7 +84,7 @@ public class NewTiket : XPLiteObject
             get => _platform;
             set => SetPropertyValue(nameof(Platform), ref _platform, value);
         }
-    [Association("WorkSpace-NewTikets")]
+        [Association("WorkSpace-Tikets")]
         public WorkSpace WorkSpace
         {
             get => _workSpace;
@@ -93,7 +97,8 @@ public class NewTiket : XPLiteObject
             get => _user;
             set => SetPropertyValue(nameof(User), ref _user, value);
         }
-        public string Preorety
+    [Association("Preority-Tikets")]
+    public Preority Preorety
         {
             get => _preority;
             set => SetPropertyValue(nameof(Preorety), ref _preority, value);
@@ -128,7 +133,8 @@ public class NewTiket : XPLiteObject
             get => _bugNumber;
             set => SetPropertyValue(nameof(BugNumber), ref _bugNumber, value);
         }
-        public String Mode
+    [Association("Mode-Tikets")]
+    public Mode Mode
         {
             get => _mode;
             set => SetPropertyValue(nameof(Mode), ref _mode, value);

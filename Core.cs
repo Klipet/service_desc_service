@@ -20,7 +20,7 @@
             "XpoDataStorePool=True;";
                Connect(connectionString);
        */
-        var connectionString = _configuration.GetConnectionString("XpoConnection")
+        var connectionString = _configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'XpoConnection' not found.");
 
         Connect(connectionString);
@@ -36,20 +36,12 @@
                 MyXPO.UpdateDataBase();
                 UpdatedDatabase = true;
             }
-
-         //   using (var uow = MyXPO.GetNewSession())
-         //   {
-         //       var obj = uow.GetObjectByKey<Country>(1);
-        //    }
-
             retObj = true;
         }
         catch (Exception ex)
         {
             MyXPO.Reset();
-            // GlobalCore.LogManager.WriteEntry(ex.ToString(), TraceEventType.Error);
         }
-
         return retObj;
     }
 }

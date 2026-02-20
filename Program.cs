@@ -10,7 +10,7 @@ using DevExpress.Xpo.DB;
             var builder = WebApplication.CreateBuilder(args);
 
             // 1️⃣ СНАЧАЛА инициализация подключения
-            var core = new Core();
+            var core = new Core(builder.Configuration);
             core.InitializeConnection();
 
             // 2️⃣ Теперь можно обновлять базу

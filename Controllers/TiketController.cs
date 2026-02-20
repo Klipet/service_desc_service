@@ -77,9 +77,9 @@ public class TiketController : ControllerBase
         var md = GetOrFail<Mode>(uow, model.ModeId, "Mode");
         var sc = GetOrFail<SubCategory>(uow, model.SubCategoryId, "SubCategory");
         var cat = GetOrFail<Category>(uow, model.CategoryId, "Category");
-        var au = GetOrFail<Author>(uow, model.CategoryId, "Author");
-        var pl = GetOrFail<Platform>(uow, model.CategoryId, "Platform");
-        var com = GetOrFail<Company>(uow, model.CategoryId, "Company");
+        var au = GetOrFail<Author>(uow, model.AuthorId, "Author");
+        var pl = GetOrFail<Platform>(uow, model.PlatformId, "Platform");
+        var com = GetOrFail<Company>(uow, model.CompanyId, "Company");
 
 
 

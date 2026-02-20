@@ -17,7 +17,7 @@ public class UserController: ControllerBase
         try
         {
             var users = _uow.Query<User>().ToList();
-            var resault = users.Select(u => new UserDto
+            var resault = users.Select(u => new UserResponseDto
             {
                 Oid = u.Oid,
                 Name = u.Name,
@@ -48,7 +48,6 @@ public class UserController: ControllerBase
 
         var user = new User(_uow)
         {
-            Oid = userModel.Oid,
             Name = userModel.Name,
             Email = userModel.Email,
             FirstName = userModel.FirstName,
@@ -66,7 +65,7 @@ public class UserController: ControllerBase
         {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
         }
-        var resaultUser = new UserDto
+        var resaultUser = new UserResponseDto
         {
             Oid = user.Oid,
             Name = user.Name,
@@ -121,7 +120,7 @@ public class UserController: ControllerBase
         {
 
 
-            var responseUser = new UserDto
+            var responseUser = new UserResponseDto
             {
                 Oid = user.Oid,
                 Name = user.Name,

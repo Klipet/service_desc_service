@@ -6,20 +6,17 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api/[controller]")]
 public class TiketLogController: ControllerBase
 {
-  //  private readonly UnitOfWork _uow;
- //   public TiketLogController(UnitOfWork uow){_uow = uow}
+    private readonly UnitOfWork _uow;
+    public TiketLogController(UnitOfWork uow) { _uow = uow; }
 
-    private readonly Session _session;
-    public TiketLogController(Session session)
-    {
-        _session = session;
-    }
+ //   private readonly Session _session;
+//    public TiketLogController(Session session){ _session = session;}
     [HttpGet]
     public IActionResult GetAll()
     {
         try
         {
-            var logs = new XPCollection<TiketLog>(_session);
+            var logs = new XPCollection<TiketLog>(_uow);
             return Ok(logs);
             /*        var tikets = _uow.Query<TiketLog>().ToList();
                     Console.WriteLine($"Найдено изменений: {tikets.Count}");
@@ -64,7 +61,7 @@ public class TiketLogController: ControllerBase
     public IActionResult GetByTiketId(int tiketId)
     {
         var logs = new XPCollection<TiketLog>(
-            _session,
+            _uow,
             CriteriaOperator.Parse("TiketId = ?", tiketId)
         );
         return Ok(logs);

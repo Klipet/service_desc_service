@@ -8,6 +8,11 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         var core = new Core(builder.Configuration);
+        if (!core.InitializeConnection())
+        {
+            Console.WriteLine("[FATAL] Cannot start application: database connection failed.");
+            return;
+        }
         core.InitializeConnection();
 
         builder.Services.AddScoped(provider => MyXPO.GetNewUnitOfWork());

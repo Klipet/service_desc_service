@@ -1,17 +1,16 @@
 ﻿using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
-using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CategoryController: ControllerBase
+
+public class CompanyController: ControllerBase
 {
     private readonly UnitOfWork _uow;
-    public CategoryController(UnitOfWork uow)
+    public CompanyController(UnitOfWork uow)
     {
         _uow = uow;
     }
-
 
     [HttpGet]
     public IActionResult GetAll()
@@ -19,18 +18,20 @@ public class CategoryController: ControllerBase
         try
         {
 
-            var category = _uow.Query<Category>().ToList();
-            Console.WriteLine($"Найдено тикетов: {category.Count}");
+            var category = _uow.Query<Company>().ToList();
+            Console.WriteLine($"Найдено Company: {category.Count}");
 
-            var result = category.Select(t => new CategoryDto
+            var result = category.Select(t => new CompanyDto
             {
                 Oid = t.Oid,
                 Name = t.Name,
+                Idnp = t.Idnp,
+                VipState = t.VipState,
                 Active = t.Active,
-                subCategoryId = t.SubCategory.Oid,
-                subCategoryName = t.SubCategory.Name,
+                DateModifire = t.DateModified,
                 DateCreated = t.DateCreated,
-                
+
+
             }).ToList();
 
             return Ok(result);
@@ -41,22 +42,40 @@ public class CategoryController: ControllerBase
         }
     }
 
+    [HttpGet("{id}")]
+    public IActionResult GetById(int id)
+    {
+        var category = _uow.GetObjectByKey<Company>(id);
+        if (category == null) return NotFound();
+
+        var categoriResponse = new CompanyDto
+        {
+            Oid = category.Oid,
+            Name = category.Name,
+            Active = category.Active,
+            DateCreated = category.DateCreated,
+            DateModifire = category.DateModified,
+            Idnp = category.Idnp,
+            VipState = category.VipState,
+
+        };
+        return Ok(categoriResponse);
+    }
+
 
     [HttpPost]
-    public IActionResult Create([FromBody] CategoryDto model)
+    public IActionResult Create([FromBody] CompanyDto model)
     {
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
-        var sc = uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == model.subCategoryId);
-        if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
-
-        var category = new Category(uow)
+        var category = new Company(uow)
         {
             Name = model.Name,
             Active = model.Active,
             DateCreated = model.DateCreated,
-            SubCategory = sc,
+            Idnp=model.Idnp,
+            VipState = model.VipState,
         };
 
         try
@@ -67,60 +86,37 @@ public class CategoryController: ControllerBase
         {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
         }
-        var resault = new CategoryDto
+        var resault = new CompanyDto
         {
             Oid = category.Oid,
             Name = category.Name,
             Active = category.Active,
             DateCreated = category.DateCreated,
-            subCategoryName = sc.Name,
-            subCategoryId = sc.Oid
+            Idnp = category.Idnp,
+            VipState = category.VipState,
         };
         //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
         return Ok(resault);
     }
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
-    {
-        var category = _uow.GetObjectByKey<Category>(id);
-        if (category == null) return NotFound();
-
-        var sc = _uow.GetObjectByKey<SubCategory>(category.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
-        
-        var categoriResponse = new CategoryDto
-        {
-            Oid = category.Oid,
-            Name = category.Name,
-            Active = category.Active,
-            DateCreated = category.DateCreated,
-            subCategoryName = sc.Name,
-            subCategoryId = sc.Oid
-        };
-        return Ok(categoriResponse);
-    }
-
     [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] CategoryDto dto)
+    public IActionResult Update(int id, [FromBody] Company dto)
     {
         try
         {
 
-            var category = _uow.Query<Category>().FirstOrDefault(t => t.Oid == id);
+            var category = _uow.Query<Company>().FirstOrDefault(t => t.Oid == id);
 
-            if (category == null)
-                return NotFound($"Тикет с Id {id} не найден");
+            if (category == null) return NotFound($"Тикет с Id {id} не найден");
 
-            var sc = _uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == dto.subCategoryId);
-            if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
-
-            category.SubCategory = sc;
             category.Name = dto.Name;
+            category.Idnp = dto.Idnp;
+            category.VipState = dto.VipState;
             category.Active = dto.Active;
 
             _uow.CommitChanges();
 
-            return Ok($"Category {id} update");
+            return Ok($"Company {id} update");
         }
         catch (Exception ex)
         {
@@ -134,7 +130,7 @@ public class CategoryController: ControllerBase
         try
         {
             // Ищем через сессию явно
-            var category = _uow.Query<Category>()
+            var category = _uow.Query<Company>()
             .FirstOrDefault(t => t.Oid == id);
 
 
@@ -152,5 +148,4 @@ public class CategoryController: ControllerBase
             return StatusCode(500, $"Ошибка при удалении: {ex.Message}");
         }
     }
-
 }

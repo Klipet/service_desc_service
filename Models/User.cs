@@ -16,7 +16,7 @@ public class User: XPObject
 
 
     [Association("User-Tikets")]
-    public XPCollection<NewTiket> Tikets => GetCollection<NewTiket>(nameof(Tikets));
+    public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
 //    public int Id
 //    {
 //        get => _id;

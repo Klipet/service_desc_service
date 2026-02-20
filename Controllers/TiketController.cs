@@ -7,10 +7,10 @@ using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
 [Route("api/[controller]")]
-public class NewTiketController : ControllerBase
+public class TiketController : ControllerBase
 {
     private readonly UnitOfWork _uow;
-    public NewTiketController(UnitOfWork uow)
+    public TiketController(UnitOfWork uow)
     {
         _uow = uow;
     }
@@ -21,23 +21,26 @@ public class NewTiketController : ControllerBase
         try
         {
 
-            var tikets = _uow.Query<NewTiket>().ToList();
+            var tikets = _uow.Query<Tiket>().ToList();
             Console.WriteLine($"Найдено тикетов: {tikets.Count}");
 
-            var result = tikets.Select(t => new NewTiketDto
+            var result = tikets.Select(t => new TiketDto
             {
-                Id = t.Id,    
+                Id = t.Oid,    
                 Title = t.Title,
                 Description = t.Description,
-                Author = t.Author,
+                AuthorId = t.Author.Oid,
+                AuthorName = t.Author.Name,
                 CategoryName = t.Category.Name,
                 Phone = t.Phone,
-                Company = t.Company,
+                CompanyId = t.Company.Oid,
+                CompanyName = t.Company.Name,
                 SubCategoryName = t.SubCategory.Name,
                 StateName = t.State.Name,
                 StateId = t.State.Oid,
                 TypeTiketName = t.TypeTiket.Name,
-                Platform = t.Platform,
+                PlatformId = t.Platform.Oid,
+                PlatformName = t.Platform.Name,
                 WorkSpaceName = t.WorkSpace.Name ,
                 UserId = t.User?.Oid ?? 0,       
                 UserName = t.User?.Name ?? "",
@@ -48,7 +51,8 @@ public class NewTiketController : ControllerBase
                 BugNumber = t.BugNumber,
                 BugTransfer = t.BugTransfer,
                 ModeName = t.Mode.Name,
-                DataCreted = t.DataCreted
+                DataCreted = t.DataCreted,
+                DataModefire = t.DataModefire,
             }).ToList();
 
             return Ok(result);
@@ -60,7 +64,7 @@ public class NewTiketController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] NewTiketDto model)
+    public IActionResult Create([FromBody] TiketDto model)
     {
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
@@ -73,21 +77,24 @@ public class NewTiketController : ControllerBase
         var md = GetOrFail<Mode>(uow, model.ModeId, "Mode");
         var sc = GetOrFail<SubCategory>(uow, model.SubCategoryId, "SubCategory");
         var cat = GetOrFail<Category>(uow, model.CategoryId, "Category");
+        var au = GetOrFail<Author>(uow, model.CategoryId, "Author");
+        var pl = GetOrFail<Platform>(uow, model.CategoryId, "Platform");
+        var com = GetOrFail<Company>(uow, model.CategoryId, "Company");
 
 
 
-        var ticket = new NewTiket(uow)
+        var ticket = new Tiket(uow)
         {
             Title = model.Title,
             Description = model.Description,
-            Author = model.Author,
+            Author = au,
             Category = cat,
             Phone = model.Phone,
-            Company = model.Company,
+            Company = com,
             SubCategory = sc,
             State = st,
             TypeTiket = tt,
-            Platform = model.Platform,
+            Platform = pl,
             WorkSpace = wp,
             User = user,
             Preorety = pr,
@@ -106,18 +113,21 @@ public class NewTiketController : ControllerBase
         catch (Exception ex) {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
         }
-        var resault = new NewTiketDto
+        var resault = new TiketDto
         {
             Title = ticket.Title,
             Description = ticket.Description,
-            Author = ticket.Author,
+            AuthorName = au.Name,
+            AuthorId = au.Oid,
             CategoryName = cat.Name,
             Phone = ticket.Phone,
-            Company = ticket.Company,
+            CompanyName = com.Name,
+            CompanyId = com.Oid,
             SubCategoryName = sc.Name,
             StateName = st.Name,
             TypeTiketName = tt.Name,
-            Platform = ticket.Platform,
+            PlatformName = pl.Name,
+            PlatformId = pl.Oid,
             WorkSpaceName = ticket.WorkSpace.Name,
             UserName = user.Name,
             UserId = user.Oid,
@@ -137,7 +147,7 @@ public class NewTiketController : ControllerBase
     [HttpGet("{id}", Name = "GetTiketById")]
     public IActionResult GetById(int id)
     {
-        var tiket = _uow.GetObjectByKey<NewTiket>(id);
+        var tiket = _uow.GetObjectByKey<Tiket>(id);
         if(tiket == null) return NotFound();
 
 
@@ -149,20 +159,26 @@ public class NewTiketController : ControllerBase
         var md = _uow.GetObjectByKey<Mode>(tiket.Mode) ?? throw new KeyNotFoundException("Mode не найден");
         var sc = _uow.GetObjectByKey<SubCategory>(tiket.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
         var cat = _uow.GetObjectByKey<Category>(tiket.Category) ?? throw new KeyNotFoundException("Category не найден");
+        var au = _uow.GetObjectByKey<Author>(tiket.Author) ?? throw new KeyNotFoundException("Author не найден");
+        var pl = _uow.GetObjectByKey<Platform>(tiket.Platform) ?? throw new KeyNotFoundException("Platform не найден");
+        var com = _uow.GetObjectByKey<Company>(tiket.Company) ?? throw new KeyNotFoundException("Company не найден");
 
-        var tiketDto = new NewTiketDto
+        var tiketDto = new TiketDto
         {
-            Id = tiket.Id, 
+            Id = tiket.Oid, 
             Title = tiket.Title,
             Description = tiket.Description,
-            Author = tiket.Author,
+            AuthorName = au.Name,
+            AuthorId = au.Oid,
             CategoryName = cat.Name,
             Phone = tiket.Phone,
-            Company = tiket.Company,
+            CompanyName = com.Name,
+            CompanyId = com.Oid,
             SubCategoryName = sc.Name,
             StateName = st.Name,
             TypeTiketName = tt.Name,
-            Platform = tiket.Platform,
+            PlatformName = pl.Name,
+            PlatformId = pl.Oid,
             WorkSpaceName = wp.Name,
             UserId = user.Oid,
             PreorityId = pr.Oid,
@@ -180,12 +196,12 @@ public class NewTiketController : ControllerBase
 
     }
     [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] NewTiketDto dto)
+    public IActionResult Update(int id, [FromBody] TiketDto dto)
     {
         try
         {
             
-            var tiket = _uow.Query<NewTiket>().FirstOrDefault(t => t.Id == id);
+            var tiket = _uow.Query<Tiket>().FirstOrDefault(t => t.Oid == id);
 
             if (tiket == null) return NotFound($"Тикет с Id {id} не найден");
 
@@ -196,18 +212,21 @@ public class NewTiketController : ControllerBase
             var pr = GetOrFail<Preority>(_uow, tiket.Preorety.Oid, "Preority");
             var md = GetOrFail<Mode>(_uow, tiket.Mode.Oid, "Mode");
             var sc = GetOrFail<SubCategory>(_uow, tiket.SubCategory.Oid, "SubCategory");
-            var cat = GetOrFail<Category>(_uow, tiket.SubCategory.Oid, "Category");
+            var cat = GetOrFail<Category>(_uow, tiket.Category.Oid, "Category");
+            var au = GetOrFail<Author>(_uow, tiket.Author.Oid, "Autor");
+            var pl = GetOrFail<Platform>(_uow, tiket.Platform.Oid, "Platform");
+            var com = GetOrFail<Company>(_uow, tiket.Company.Oid, "Company");
 
             tiket.Title = dto.Title;
             tiket.Description = dto.Description;
-            tiket.Author = dto.Author;
+            tiket.Author = au;
             tiket.Category = cat;
             tiket.Phone = dto.Phone;
-            tiket.Company = dto.Company;
+            tiket.Company = com;
             tiket.SubCategory = sc;
             tiket.State = st;
             tiket.TypeTiket = tt;
-            tiket.Platform = dto.Platform;
+            tiket.Platform = pl;
             tiket.WorkSpace = wp;
             tiket.User = user;
             tiket.Preorety = pr;
@@ -238,8 +257,8 @@ public class NewTiketController : ControllerBase
         try
         {
             // Ищем через сессию явно
-            var ticket = _uow.Query<NewTiket>()
-            .FirstOrDefault(t => t.Id == id);
+            var ticket = _uow.Query<Tiket>()
+            .FirstOrDefault(t => t.Oid == id);
 
      
             if (ticket == null)

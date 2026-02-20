@@ -1,16 +1,13 @@
 ﻿using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
-using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CategoryController: ControllerBase
+public class PlatformController: ControllerBase
 {
     private readonly UnitOfWork _uow;
-    public CategoryController(UnitOfWork uow)
-    {
-        _uow = uow;
-    }
+    public PlatformController(UnitOfWork uow)
+    {_uow = uow;}
 
 
     [HttpGet]
@@ -19,18 +16,19 @@ public class CategoryController: ControllerBase
         try
         {
 
-            var category = _uow.Query<Category>().ToList();
-            Console.WriteLine($"Найдено тикетов: {category.Count}");
+            var platform = _uow.Query<Platform>().ToList();
+            Console.WriteLine($"Найдено Company: {platform.Count}");
 
-            var result = category.Select(t => new CategoryDto
+            var result = platform.Select(t => new PlatformDto
             {
                 Oid = t.Oid,
                 Name = t.Name,
                 Active = t.Active,
-                subCategoryId = t.SubCategory.Oid,
-                subCategoryName = t.SubCategory.Name,
                 DateCreated = t.DateCreated,
-                
+                companyId = t.Company.Oid,
+                companyName = t.Company.Name,
+                DateModifire = t.DateModified,
+         
             }).ToList();
 
             return Ok(result);
@@ -41,22 +39,22 @@ public class CategoryController: ControllerBase
         }
     }
 
-
     [HttpPost]
-    public IActionResult Create([FromBody] CategoryDto model)
+    public IActionResult Create([FromBody] PlatformDto model)
     {
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
-        var sc = uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == model.subCategoryId);
-        if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
+        var sc = uow.Query<Company>().FirstOrDefault(e => e.Oid == model.companyId);
+        if (sc == null) throw new KeyNotFoundException("Company не найден");
 
-        var category = new Category(uow)
+        var category = new Platform(uow)
         {
             Name = model.Name,
             Active = model.Active,
             DateCreated = model.DateCreated,
-            SubCategory = sc,
+            Company = sc,
+         
         };
 
         try
@@ -67,14 +65,14 @@ public class CategoryController: ControllerBase
         {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
         }
-        var resault = new CategoryDto
+        var resault = new PlatformDto
         {
             Oid = category.Oid,
             Name = category.Name,
             Active = category.Active,
             DateCreated = category.DateCreated,
-            subCategoryName = sc.Name,
-            subCategoryId = sc.Oid
+            companyId = sc.Oid,
+            companyName = sc.Name
         };
         //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
         return Ok(resault);
@@ -83,44 +81,44 @@ public class CategoryController: ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
-        var category = _uow.GetObjectByKey<Category>(id);
+        var category = _uow.GetObjectByKey<Platform>(id);
         if (category == null) return NotFound();
 
-        var sc = _uow.GetObjectByKey<SubCategory>(category.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
-        
-        var categoriResponse = new CategoryDto
+        var sc = _uow.GetObjectByKey<Company>(category.Oid) ?? throw new KeyNotFoundException("Company не найден");
+
+        var categoriResponse = new PlatformDto
         {
             Oid = category.Oid,
             Name = category.Name,
             Active = category.Active,
             DateCreated = category.DateCreated,
-            subCategoryName = sc.Name,
-            subCategoryId = sc.Oid
+            companyId=sc.Oid,
+            companyName = sc.Name,
+            DateModifire = category.DateModified
         };
         return Ok(categoriResponse);
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] CategoryDto dto)
+    public IActionResult Update(int id, [FromBody] PlatformDto dto)
     {
         try
         {
 
-            var category = _uow.Query<Category>().FirstOrDefault(t => t.Oid == id);
+            var platform = _uow.Query<Platform>().FirstOrDefault(t => t.Oid == id);
 
-            if (category == null)
-                return NotFound($"Тикет с Id {id} не найден");
+            if (platform == null) return NotFound($"Рабочее место с Id {id} не найден");
 
-            var sc = _uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == dto.subCategoryId);
-            if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
+            var sc = _uow.Query<Company>().FirstOrDefault(e => e.Oid == dto.companyId);
+            if (sc == null) throw new KeyNotFoundException("Компания не найден");
 
-            category.SubCategory = sc;
-            category.Name = dto.Name;
-            category.Active = dto.Active;
+            platform.Company = sc;
+            platform.Name = dto.Name;
+            platform.Active = dto.Active;
 
             _uow.CommitChanges();
 
-            return Ok($"Category {id} update");
+            return Ok($"platform {id} update");
         }
         catch (Exception ex)
         {
@@ -134,15 +132,13 @@ public class CategoryController: ControllerBase
         try
         {
             // Ищем через сессию явно
-            var category = _uow.Query<Category>()
-            .FirstOrDefault(t => t.Oid == id);
+            var platform = _uow.Query<Platform>().FirstOrDefault(t => t.Oid == id);
 
-
-            if (category == null)
+            if (platform == null)
                 return NotFound($"Тикет с id={id} не найден");
 
             // Удаляем
-            _uow.Delete(category);
+            _uow.Delete(platform);
             _uow.CommitChanges();
 
             return NoContent(); // 204
@@ -152,5 +148,4 @@ public class CategoryController: ControllerBase
             return StatusCode(500, $"Ошибка при удалении: {ex.Message}");
         }
     }
-
 }

@@ -8,7 +8,7 @@ public class WorkSpace: BaseEntity
     public XPCollection<User> Users => GetCollection<User>(nameof(Users));
 
     [Association("WorkSpace-Tikets")]
-    public XPCollection<NewTiket> Tikets => GetCollection<NewTiket>(nameof(Tikets));
+    public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
 
   
 }

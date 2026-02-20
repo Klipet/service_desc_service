@@ -1,20 +1,20 @@
 ﻿using DevExpress.Xpo;
-[Persistent("NewTiket")]
+[Persistent("Tiket")]
 [DeferredDeletion(false)]
 
-public class NewTiket : XPLiteObject
+public class Tiket : XPObject
 {
-        public NewTiket(Session session) : base(session) { }
+        public Tiket(Session session) : base(session) { }
         private int _id;
         private string _title;
         private string _description;
-        private string _company;
+        private Company _company;
         private Category _category;
         private SubCategory _subCategory;
         private State _state;
         private TiketType _typeTiket;
-        private string _author;
-        private string _platform;
+        private Author _author;
+        private Platform _platform;
         private WorkSpace _workSpace;
         private Preority _preority;
         private string _phone;
@@ -25,15 +25,9 @@ public class NewTiket : XPLiteObject
         private string _bugNumber;
         private Mode _mode;
         private DateTime _dataCreated;
+        private DateTime _dataModefire;
         private User _user;
 
-
-    [Key(AutoGenerate = true)]
-    public int Id
-    {
-        get => _id;
-        set => SetPropertyValue(nameof(Id), ref _id, value);
-         }
         public string Title
         {
             get => _title;
@@ -45,7 +39,8 @@ public class NewTiket : XPLiteObject
             get => _description;
             set => SetPropertyValue(nameof(Description), ref _description, value);
         }
-        public string Company
+    [Association("Company-Tikets")]
+    public Company Company
         {
             get => _company;
             set => SetPropertyValue(nameof(Company), ref _company, value);
@@ -74,12 +69,14 @@ public class NewTiket : XPLiteObject
             get => _typeTiket;
             set => SetPropertyValue(nameof(TypeTiket), ref _typeTiket, value);
         }
-        public string Author
+    [Association("Author-Tikets")]
+    public Author Author
         {
             get => _author;
             set => SetPropertyValue(nameof(Author), ref _author, value);
         }
-        public string Platform
+    [Association("Platform-Tikets")]
+    public Platform Platform
         {
             get => _platform;
             set => SetPropertyValue(nameof(Platform), ref _platform, value);
@@ -118,7 +115,12 @@ public class NewTiket : XPLiteObject
             get => _dataPhone;
             set => SetPropertyValue(nameof(DataPhone), ref _dataPhone, value);
         }
-        public DateTime DateSecondPhone
+    public DateTime DataModefire
+    {
+        get => _dataModefire;
+        set => SetPropertyValue(nameof(DataPhone), ref _dataModefire, value);
+    }
+    public DateTime DateSecondPhone
         {
             get => _dateSecondPhone;
             set => SetPropertyValue(nameof(DateSecondPhone), ref _dateSecondPhone, value);
@@ -145,4 +147,48 @@ public class NewTiket : XPLiteObject
             set => SetPropertyValue(nameof(DataCreted), ref _dataCreated, value);
         }
 
+
+    private TiketLog CreateLog(string action)
+    {
+        return new TiketLog(Session)
+        {
+            TiketId = this.Oid,
+            Action = action,
+            ChangedAt = DateTime.UtcNow,
+            User = _user,
+
+            Title = _title,
+            Description = _description,
+            Company = _company,
+            Category = _category,
+            SubCategory = _subCategory,
+            State = _state,
+            TypeTiket = _typeTiket,
+            Author = _author,
+            Platform = _platform,
+            WorkSpace = _workSpace,
+            Preority = _preority,
+            Phone = _phone,
+            ResaultPhone = _resaultPhone,
+            DataPhone = _dataPhone,
+            DateSecondPhone = _dateSecondPhone,
+            BugTransfer = _bugTransfer,
+            BugNumber = _bugNumber,
+            Mode = _mode,
+            DataCreated = _dataCreated,
+            DataModefire = _dataModefire
+        };
     }
+    protected override void OnSaving()
+    {
+        base.OnSaving();
+        CreateLog(Session.IsNewObject(this) ? "INSERT" : "UPDATE");
+    }
+
+    protected override void OnDeleting()
+    {
+        base.OnDeleting();
+        CreateLog("DELETE");
+    }
+
+}

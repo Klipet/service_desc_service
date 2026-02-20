@@ -10,7 +10,7 @@
      "Port=5432;" +
      "User ID=postgres;" +
      "Password=Admin@123;" +
-     "Database=servicedesck2;" +
+     "Database=servicedesck;" +
      "XpoDataStorePool=True;";
         Connect(connectionString);
     }

@@ -1,4 +1,4 @@
-﻿public class TiketDto
+﻿public class TiketResponseDto
     {
     public int Id { get; set; }
     public string Title { get; set; }
@@ -52,10 +52,42 @@
     //Platform
     public string PlatformName { get; set; }
     public int PlatformId { get; set; }
-
     //Company
     public string CompanyName { get; set; }
     public int CompanyId { get; set; }
-
 }
+
+public class TiketPostDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public string Phone { get; set; }
+    public DateTime DataPhone { get; set; }
+    public bool ResaultPhone { get; set; }
+    public DateTime DateSecondPhone { get; set; }
+    public string BugNumber { get; set; }
+    public bool BugTransfer { get; set; }
+    public DateTime DataCreted { get; set; }
+    public DateTime DataModefire { get; set; }
+
+    // User
+    public int UserId { get; set; }  // ← для получения от клиента
+    //workSpace
+    public int WorkSpaceId { get; set; } // WorkSpace
+    //state
+    public int StateId { get; set; }
+
+    //typeTiket
+    public int TypeTiketId { get; set; }
+    public int PreorityId { get; set; }
+    public int ModeId { get; set; }
+    public int SubCategoryId { get; set; }
+    public int CategoryId { get; set; }
+    public int AuthorId { get; set; }
+    public int PlatformId { get; set; }
+    public int CompanyId { get; set; }
+}
+
+
 

@@ -8,7 +8,7 @@ public class User: XPObject
     private string _name;
     private string _firstName;
     private string _email;
-    private string _password;
+    private string _passwordHash;
     private string _phone;
     private string _loghin;
     private WorkSpace _workSpace;
@@ -17,11 +17,7 @@ public class User: XPObject
 
     [Association("User-Tikets")]
     public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
-//    public int Id
-//    {
-//        get => _id;
-//        set => SetPropertyValue(nameof(Id), ref _id, value);
-//    }
+
     public string Name
     {
         get => _name;
@@ -37,10 +33,10 @@ public class User: XPObject
         get => _email;
         set => SetPropertyValue(nameof(Email), ref _email, value);
     }
-    public string Password
+    public string PasswordHash
     {
-        get => _password;
-        set => SetPropertyValue(nameof(Password), ref _password, value);
+        get => _passwordHash;
+        set => SetPropertyValue(nameof(PasswordHash), ref _passwordHash, value);
     }
     public string Phone
     {

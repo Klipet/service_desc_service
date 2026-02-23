@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api")]
 public class TiketController : ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -15,7 +15,7 @@ public class TiketController : ControllerBase
         _uow = uow;
     }
 
-    [HttpGet]
+    [HttpGet("GetAllTicket")]
     public IActionResult GetAll()
     {
         try
@@ -24,7 +24,7 @@ public class TiketController : ControllerBase
             var tikets = _uow.Query<Tiket>().ToList();
             Console.WriteLine($"Найдено тикетов: {tikets.Count}");
 
-            var result = tikets.Select(t => new TiketDto
+            var result = tikets.Select(t => new TiketResponseDto
             {
                 Id = t.Oid,    
                 Title = t.Title,
@@ -63,13 +63,24 @@ public class TiketController : ControllerBase
         }
     }
 
-    [HttpPost]
-    public IActionResult Create([FromBody] TiketDto model)
+    [HttpPost("NewTicket")]
+    public IActionResult Create([FromBody] TiketPostDto model)
     {
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
+        User user;
+        if (model.UserId == 0)
+        {
+           user = SettingTiket.GetUserRoundRobin(uow, workSpaceId: model.WorkSpaceId);
 
-        var user = GetOrFail<User>(uow, model.UserId, "User");
+            Console.WriteLine($"userId = {user.Oid}");
+        }
+        else
+        {
+            user = GetOrFail<User>(uow, model.UserId, "User");
+        }
+
+     //   var users = GetOrFail<User>(uow, model.UserId, "User");
         var wp = GetOrFail<WorkSpace>(uow, model.WorkSpaceId, "WorkSpace");
         var st = GetOrFail<State>(uow, model.StateId, "State");
         var tt = GetOrFail<TiketType>(uow, model.TypeTiketId, "TiketType");
@@ -113,7 +124,7 @@ public class TiketController : ControllerBase
         catch (Exception ex) {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
         }
-        var resault = new TiketDto
+        var resault = new TiketResponseDto
         {
             Title = ticket.Title,
             Description = ticket.Description,
@@ -138,13 +149,14 @@ public class TiketController : ControllerBase
             BugNumber = ticket.BugNumber,
             BugTransfer = ticket.BugTransfer,
             ModeId = md.Oid,
+            ModeName = md.Name,
             DataCreted = ticket.DataCreted,
         };
      //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
          return Ok(resault);
     }
 
-    [HttpGet("{id}", Name = "GetTiketById")]
+    [HttpGet("GetTicketById={id}")]
     public IActionResult GetById(int id)
     {
         var tiket = _uow.GetObjectByKey<Tiket>(id);
@@ -163,7 +175,7 @@ public class TiketController : ControllerBase
         var pl = _uow.GetObjectByKey<Platform>(tiket.Platform) ?? throw new KeyNotFoundException("Platform не найден");
         var com = _uow.GetObjectByKey<Company>(tiket.Company) ?? throw new KeyNotFoundException("Company не найден");
 
-        var tiketDto = new TiketDto
+        var tiketDto = new TiketResponseDto
         {
             Id = tiket.Oid, 
             Title = tiket.Title,
@@ -195,27 +207,27 @@ public class TiketController : ControllerBase
         return Ok(tiketDto);
 
     }
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] TiketDto dto)
+    [HttpPut("Update")]
+    public IActionResult Update([FromQuery] int id, [FromBody] TiketPostDto dto)
     {
         try
         {
             
             var tiket = _uow.Query<Tiket>().FirstOrDefault(t => t.Oid == id);
-
+            Console.WriteLine($"Найдено тикетов: {tiket.Oid}");
             if (tiket == null) return NotFound($"Тикет с Id {id} не найден");
 
-            var user = GetOrFail<User>(_uow, tiket.User.Oid, "Пользователь");
-            var wp = GetOrFail<WorkSpace>(_uow, tiket.WorkSpace.Oid, "WorkSpace");
-            var st = GetOrFail<State>(_uow, tiket.State.Oid, "State");
-            var tt = GetOrFail<TiketType>(_uow, tiket.TypeTiket.Oid, "TiketType");
-            var pr = GetOrFail<Preority>(_uow, tiket.Preorety.Oid, "Preority");
-            var md = GetOrFail<Mode>(_uow, tiket.Mode.Oid, "Mode");
-            var sc = GetOrFail<SubCategory>(_uow, tiket.SubCategory.Oid, "SubCategory");
-            var cat = GetOrFail<Category>(_uow, tiket.Category.Oid, "Category");
-            var au = GetOrFail<Author>(_uow, tiket.Author.Oid, "Autor");
-            var pl = GetOrFail<Platform>(_uow, tiket.Platform.Oid, "Platform");
-            var com = GetOrFail<Company>(_uow, tiket.Company.Oid, "Company");
+            var user = GetOrFail<User>(_uow, dto.UserId, "Пользователь");
+            var wp = GetOrFail<WorkSpace>(_uow, dto.WorkSpaceId, "WorkSpace");
+            var st = GetOrFail<State>(_uow, dto.StateId, "State");
+            var tt = GetOrFail<TiketType>(_uow, dto.TypeTiketId, "TiketType");
+            var pr = GetOrFail<Preority>(_uow, dto.PreorityId, "Preority");
+            var md = GetOrFail<Mode>(_uow, dto.ModeId, "Mode");
+            var sc = GetOrFail<SubCategory>(_uow, dto.SubCategoryId, "SubCategory");
+            var cat = GetOrFail<Category>(_uow, dto.CategoryId, "Category");
+            var au = GetOrFail<Author>(_uow, dto.AuthorId, "Autor");
+            var pl = GetOrFail<Platform>(_uow, dto.PlatformId, "Platform");
+            var com = GetOrFail<Company>(_uow, dto.CompanyId, "Company");
 
             tiket.Title = dto.Title;
             tiket.Description = dto.Description;
@@ -251,7 +263,7 @@ public class TiketController : ControllerBase
 
 
 
-    [HttpDelete("{id}")]
+    [HttpDelete("ById={id}")]
     public IActionResult Delete(int id)
     {
         try

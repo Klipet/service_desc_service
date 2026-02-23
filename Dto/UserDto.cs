@@ -21,7 +21,6 @@ public class UserResponseDto
     public string Email { get; set; }
 
     public string Loghin { get; set; }
-    public string Password { get; set; }
     public string Phone { get; set; }
     public string WorkSpaceName { get; set; }
     public int WorkSpaceId { get; set; }

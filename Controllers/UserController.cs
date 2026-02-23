@@ -1,4 +1,6 @@
-﻿using DevExpress.Xpo;
+﻿using Amazon.Runtime.Internal;
+using DevExpress.Xpo;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
@@ -7,10 +9,14 @@ using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 public class UserController: ControllerBase
 {
     private readonly UnitOfWork _uow;
-    public UserController(UnitOfWork uow)
+    private readonly GenerateJwtToken _jwtGenerator;
+
+    public UserController(UnitOfWork uow, GenerateJwtToken jwtGenerator)
     {
         _uow = uow;
+        _jwtGenerator = jwtGenerator;
     }
+
     [HttpGet]
     public IActionResult GetAllUser()
     {
@@ -23,7 +29,6 @@ public class UserController: ControllerBase
                 Name = u.Name,
                 Email = u.Email,
                 FirstName = u.FirstName,
-                Password = u.Password,
                 Phone = u.Phone,
                 Loghin = u.Loghin,
                 DateCreated = u.DateCreated,
@@ -44,15 +49,16 @@ public class UserController: ControllerBase
 
         var wp = _uow.Query<WorkSpace>().FirstOrDefault(u => u.Oid == userModel.WorkSpaceId);
         if (wp == null)
-            return NotFound("Рабочее место не найдено не найден");
+            return NotFound("Рабочее место не найдено");
 
         var user = new User(_uow)
         {
             Name = userModel.Name,
             Email = userModel.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(userModel.Password),
             FirstName = userModel.FirstName,
-            Password = userModel.Password,
             Phone = userModel.Phone,
+            Loghin = userModel.Loghin,
             DateCreated = DateTime.UtcNow,
             WorkSpace = wp
 
@@ -71,7 +77,6 @@ public class UserController: ControllerBase
             Name = user.Name,
             Email = user.Email,
             FirstName = user.FirstName,
-            Password = user.Password,
             Phone = user.Phone,
             WorkSpaceName = user.WorkSpace.Name,
             DateCreated = DateTime.UtcNow,
@@ -95,8 +100,8 @@ public class UserController: ControllerBase
             user.Name = userModel.Name;
             user.Email = userModel.Email;
             user.FirstName = userModel.FirstName;
-            user.Password = userModel.Password;
             user.Phone = userModel.Phone;
+            user.PasswordHash = userModel.Password;
             user.Loghin = userModel.Loghin;
             user.WorkSpace = wp;
             _uow.CommitChanges();
@@ -107,6 +112,8 @@ public class UserController: ControllerBase
             return StatusCode(ex.HResult, $"Ошибка при обновлении: {ex.Message}");
         }
     }
+
+
     [HttpGet("{id}")]
     public IActionResult UserGetById(int id) 
     {
@@ -126,7 +133,6 @@ public class UserController: ControllerBase
                 Name = user.Name,
                 Email = user.Email,
                 FirstName = user.FirstName,
-                Password = user.Password,
                 Phone = user.Phone,
                 Loghin = user.Loghin,
                 WorkSpaceName = wp.Name,
@@ -136,6 +142,38 @@ public class UserController: ControllerBase
             return Ok(responseUser);
         }
         catch (Exception ex) {
+            return StatusCode(ex.HResult, $"User error: {ex.Message}");
+        }
+    }
+
+    [HttpPost("Auth")]
+    public IActionResult AuthUser([FromBody] LoginRequestDto reqest)
+    {
+        if (string.IsNullOrWhiteSpace(reqest.Login) || string.IsNullOrWhiteSpace(reqest.Password))
+            return BadRequest("Login and password are required");
+
+        var user = _uow.Query<User>().FirstOrDefault(u => u.Loghin == reqest.Login);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(reqest.Password, user.PasswordHash))
+            return Unauthorized("Invalid credentials");
+
+        try
+        {
+            var token = _jwtGenerator.GenerateJwtTokenString(user);
+
+            return Ok(new
+            {
+                token = token,
+                user = new
+                {
+                    id = user.Oid,
+                    name = user.Name,
+                    email = user.Email,
+                    login = user.Loghin
+                }
+            });
+        }
+        catch (Exception ex)
+        {
             return StatusCode(ex.HResult, $"User error: {ex.Message}");
         }
     }

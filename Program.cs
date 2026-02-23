@@ -20,17 +20,16 @@ public class Program
         {
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
+        builder.Services.AddSingleton<GenerateJwtToken>();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddSingleton<S3Service>();
-
+    //    builder.WebHost.UseUrls("http://0.0.0.0:5000");
         var app = builder.Build();
-
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+        using var uow = MyXPO.GetNewUnitOfWork();
+        EmptyDataDB.SendData(uow);
+        app.UseSwagger();
+        app.UseSwaggerUI();
 
         app.UseHttpsRedirection();
         app.UseAuthorization();

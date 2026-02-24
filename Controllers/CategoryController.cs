@@ -1,5 +1,6 @@
 ﻿using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
@@ -21,6 +22,7 @@ public class CategoryController: ControllerBase
 
             var category = _uow.Query<Category>().ToList();
             Console.WriteLine($"Найдено тикетов: {category.Count}");
+            
 
             var result = category.Select(t => new CategoryDto
             {

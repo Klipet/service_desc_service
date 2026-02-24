@@ -27,8 +27,9 @@ public class Tiket : XPObject
         private DateTime _dataCreated;
         private DateTime _dataModefire;
         private User _user;
+        private DateTime? _dueDate;
 
-        public string Title
+    public string Title
         {
             get => _title;
             set => SetPropertyValue(nameof(Title),ref _title, value);
@@ -96,10 +97,21 @@ public class Tiket : XPObject
         }
     [Association("Preority-Tikets")]
     public Preority Preorety
+    {
+        get => _preority;
+        set 
         {
-            get => _preority;
-            set => SetPropertyValue(nameof(Preorety), ref _preority, value);
+         SetPropertyValue(nameof(Preorety), ref _preority, value);
+
+            // При выборе приоритета — автоматически считаем DueDate
+            if (_preority != null)
+            {
+                var calculator = new DeadlineCalculator(Session);
+                DueDate = calculator.Calculate( _preority.DeadlineHours);
+            } 
         }
+        
+    }
         public string Phone
         {
             get => _phone;
@@ -146,6 +158,11 @@ public class Tiket : XPObject
             get => _dataCreated;
             set => SetPropertyValue(nameof(DataCreted), ref _dataCreated, value);
         }
+    public DateTime? DueDate
+    {
+        get => _dueDate;
+        set => SetPropertyValue(nameof(DueDate), ref _dueDate, value);
+    }
 
 
     private TiketLog CreateLog(string action)

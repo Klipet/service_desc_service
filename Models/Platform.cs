@@ -10,7 +10,7 @@ public class Platform: BaseEntity
     [Association("Platform-Authors")]
     public XPCollection<Author> Authors => GetCollection<Author>(nameof(Authors));
 
-    [Association("Platform-Companys")]
+    [Association("Platforms-Companys")]
    public Company Company
     {
         get => _company;

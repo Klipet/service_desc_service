@@ -1,4 +1,5 @@
-﻿using DevExpress.Xpo;
+﻿using DevExpress.Schedule;
+using DevExpress.Xpo;
 using System.Xml.Linq;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
@@ -64,6 +65,33 @@ public class EmptyDataDB
         if (!uow.Query<Mode>().Any())
         {
             new Mode(uow) { Name = "Нормальный" };
+        }
+
+        if (!uow.Query<HolidayDay>().Any())
+        {
+            var holidays = new List<(string Name, int Day, int Month)>
+    {
+        ("Новый год", 1, 1),
+        ("Рождество (православное)", 7, 1),
+        ("Международный женский день", 8, 3),
+        ("День труда", 1, 5),
+        ("День победы", 9, 5),
+        ("День детей", 1, 6),
+        ("День независимости Молдовы", 27, 8),
+        ("Limba noastră", 31, 8),
+        ("Рождество (католическое)", 25, 12),
+    };
+
+            foreach (var h in holidays)
+            {
+                new HolidayDay(uow)
+                {
+                    Name = h.Name,
+                    Date = new DateTime(2000, h.Month, h.Day),
+                    IsRecurringYearly = true
+                };
+            }
+
         }
 
         uow.CommitChanges();

@@ -13,12 +13,8 @@ public class Company: BaseEntity
     [Association("Company-Tikets")]
     public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
 
-    [Association("Platform-Companys")]
-    public Platform Platform
-    {
-        get => _platform;
-        set => SetPropertyValue(nameof(Platform), ref _platform, value);
-    }
+    [Association("Platforms-Companys")]
+    public XPCollection<Platform> Platforms => GetCollection<Platform>(nameof(Platforms));
     public bool VipState
     {
         get => _vipState;

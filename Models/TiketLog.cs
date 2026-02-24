@@ -5,13 +5,26 @@ public class TiketLog: XPObject
 {
     public TiketLog(Session session) : base(session) { }
 
+    private string _title;
+    private string _description;
+
+
     public int TiketId { get; set; }
     public string Action { get; set; }
     public DateTime ChangedAt { get; set; }
     public User User { get; set; }
 
-    public string Title { get; set; }
-    public string Description { get; set; }
+    public string Title
+    {
+        get => _title;
+        set => SetPropertyValue(nameof(Title), ref _title, value);
+    }
+    [Size(SizeAttribute.Unlimited)]
+    public string Description
+    {
+        get => _description;
+        set => SetPropertyValue(nameof(Description), ref _description, value);
+    }
     public Company Company { get; set; }
     public Category Category { get; set; }
     public SubCategory SubCategory { get; set; }

@@ -20,6 +20,10 @@ public class Program
         {
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
+
+        builder.Services.AddSingleton<EmailService>();
+        builder.Services.AddHostedService<EmailBackgroundService>();
+        builder.Services.AddTransient<TiketFromEmail>(); // ← эта строка отсутствует
         builder.Services.AddSingleton<GenerateJwtToken>();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

@@ -1,15 +1,85 @@
 ﻿using DevExpress.Xpo;
+using Microsoft.AspNetCore.Mvc;
 
-public class PreorityController : BaseController<Preority, PreorityDto>
+[ApiController]
+[Route("api/settings/priorities")]
+public class PreorityController : ControllerBase
 {
-    public PreorityController(UnitOfWork uow) : base(uow) { }
-    protected override Preority CreateModel(PreorityDto dto) => new Preority(_uow)
+    private readonly UnitOfWork _uow;
+    public PreorityController(UnitOfWork uow) => _uow = uow;
+
+    [HttpGet]
+    public IActionResult GetAll()
     {
-        Name = dto.Name,
-        Active = dto.Active,
-        DateCreated = dto.DateCreated,
-        DateModified = dto.DateModifire,
-    };
-}
+        var list = new XPCollection<Preority>(_uow)
+            .Select(p => new
+            {
+                p.Oid,
+                p.Name,
+                p.DeadlineHours,
+                p.DeadlineLabel,
+                p.Active,
+                p.DateCreated,
+            }).ToList();
+        return Ok(list);
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult Update(int id, [FromBody] PreorityDto dto)
+    {
+        var p = _uow.GetObjectByKey<Preority>(id);
+        if (p == null) return NotFound();
+        p.Name = dto.Name;
+        p.Active = dto.Active;
+        p.DeadlineHours = dto.DeadlineHours;
+        _uow.CommitChanges();
+        return Ok();
+    }
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        try
+        {
+            // Ищем через сессию явно
+            var preority = _uow.Query<Preority>()
+            .FirstOrDefault(t => t.Oid == id);
+
+
+            if (preority == null)
+                return NotFound($"Тикет с id={id} не найден");
+
+            // Удаляем
+            _uow.Delete(preority);
+            _uow.CommitChanges();
+
+            return NoContent(); // 204
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Ошибка при удалении: {ex.Message}");
+        }
+    }
+
+    [HttpGet("GetTicketById")]
+    public IActionResult GetById([FromQuery] int id)
+    {
+        var preority = _uow.GetObjectByKey<Preority>(id);
+        if (preority == null) return NotFound();
+
+        var tiketDto = new
+        {
+            Oid = preority.Oid,
+            Name = preority.Name,
+            Active = preority.Active,
+            DeadlineHours = preority.DeadlineHours,
+            DateCreated = preority.DateCreated,
+            DeadlineLabel = preority.DeadlineLabel,
+        };
+
+        return Ok(tiketDto);
+
+    }
+
+   }
 
 

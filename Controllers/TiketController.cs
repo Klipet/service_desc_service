@@ -53,6 +53,7 @@ public class TiketController : ControllerBase
                 ModeName = t.Mode.Name,
                 DataCreted = t.DataCreted,
                 DataModefire = t.DataModefire,
+                DueDate = t.DueDate ?? DateTime.UtcNow,
             }).ToList();
 
             return Ok(result);
@@ -151,13 +152,14 @@ public class TiketController : ControllerBase
             ModeId = md.Oid,
             ModeName = md.Name,
             DataCreted = ticket.DataCreted,
+            DueDate = ticket.DueDate ?? DateTime.UtcNow,
         };
      //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
          return Ok(resault);
     }
 
-    [HttpGet("GetTicketById={id}")]
-    public IActionResult GetById(int id)
+    [HttpGet("GetTicketById")]
+    public IActionResult GetById([FromQuery] int id)
     {
         var tiket = _uow.GetObjectByKey<Tiket>(id);
         if(tiket == null) return NotFound();
@@ -200,7 +202,8 @@ public class TiketController : ControllerBase
             BugNumber = tiket.BugNumber,
             BugTransfer = tiket.BugTransfer,
             ModeName = md.Name,
-            DataCreted = tiket.DataCreted
+            DataCreted = tiket.DataCreted,
+            DueDate = tiket.DueDate ?? DateTime.UtcNow,
 
         };
                  
@@ -249,10 +252,11 @@ public class TiketController : ControllerBase
             tiket.BugTransfer = dto.BugTransfer;
             tiket.Mode = md;
             tiket.DataCreted = dto.DataCreted;
+           
 
             _uow.CommitChanges();
 
-            return Ok($"Tiket {id} update");
+            return Ok($"Tiket {id} update. Дата выполнения:{tiket.DueDate}");
         }
         catch (Exception ex)
         {
@@ -263,8 +267,8 @@ public class TiketController : ControllerBase
 
 
 
-    [HttpDelete("ById={id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("delete")]
+    public IActionResult Delete([FromQuery] int id)
     {
         try
         {

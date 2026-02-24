@@ -55,6 +55,7 @@
     //Company
     public string CompanyName { get; set; }
     public int CompanyId { get; set; }
+    public DateTime DueDate { get; set; }
 }
 
 public class TiketPostDto

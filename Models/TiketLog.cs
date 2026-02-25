@@ -19,7 +19,7 @@ public class TiketLog: XPObject
         get => _title;
         set => SetPropertyValue(nameof(Title), ref _title, value);
     }
-    [Size(SizeAttribute.Unlimited)]
+    [Size(-1)]
     public string Description
     {
         get => _description;

@@ -27,30 +27,30 @@ public class TiketController : ControllerBase
             var result = tikets.Select(t => new TiketResponseDto
             {
                 Id = t.Oid,    
-                Title = t.Title,
-                Description = t.Description,
-                AuthorId = t.Author.Oid,
-                AuthorName = t.Author.Name,
-                CategoryName = t.Category.Name,
-                Phone = t.Phone,
-                CompanyId = t.Company.Oid,
-                CompanyName = t.Company.Name,
-                SubCategoryName = t.SubCategory.Name,
-                StateName = t.State.Name,
-                StateId = t.State.Oid,
-                TypeTiketName = t.TypeTiket.Name,
-                PlatformId = t.Platform.Oid,
-                PlatformName = t.Platform.Name,
-                WorkSpaceName = t.WorkSpace.Name ,
+                Title = t.Title ?? string.Empty,
+                Description = t.Description ?? string.Empty,
+                AuthorId = t.Author?.Oid ?? 0,
+                AuthorName = t.Author?.Name ?? string.Empty,
+                CategoryName = t.Category?.Name ?? string.Empty,
+                Phone = t.Phone ?? string.Empty,
+                CompanyId = t.Company?.Oid ?? 0,
+                CompanyName = t.Company?.Name ?? string.Empty,
+                SubCategoryName = t.SubCategory?.Name ?? string.Empty,   
+                StateName = t.State?.Name ?? string.Empty,
+                StateId = t.State?.Oid ?? 0,
+                TypeTiketName = t.TypeTiket?.Name ?? string.Empty,
+                PlatformId = t.Platform?.Oid ?? 0,
+                PlatformName = t.Platform?.Name ?? string.Empty,
+                WorkSpaceName = t.WorkSpace?.Name ?? string.Empty,
                 UserId = t.User?.Oid ?? 0,       
-                UserName = t.User?.Name ?? "",
-                PreorityName = t.Preorety.Name,
+                UserName = t.User?.Name ?? string.Empty,
+                PreorityName = t.Preorety?.Name ?? string.Empty,
                 DataPhone = t.DataPhone,
                 ResaultPhone = t.ResaultPhone,
                 DateSecondPhone = t.DateSecondPhone,
-                BugNumber = t.BugNumber,
+                BugNumber = t.BugNumber ?? string.Empty,
                 BugTransfer = t.BugTransfer,
-                ModeName = t.Mode.Name,
+                ModeName = t.Mode?.Name ?? string.Empty,
                 DataCreted = t.DataCreted,
                 DataModefire = t.DataModefire,
                 DueDate = t.DueDate ?? DateTime.UtcNow,
@@ -165,17 +165,17 @@ public class TiketController : ControllerBase
         if(tiket == null) return NotFound();
 
 
-        var user = _uow.GetObjectByKey<User>(tiket.User) ?? throw new KeyNotFoundException("Пользователь не найден");
-        var wp = _uow.GetObjectByKey<WorkSpace>(tiket.WorkSpace) ?? throw new KeyNotFoundException("WorkSpace не найден");
-        var st = _uow.GetObjectByKey<State>(tiket.State) ?? throw new KeyNotFoundException("State не найден");
-        var tt = _uow.GetObjectByKey<TiketType>(tiket.TypeTiket) ?? throw new KeyNotFoundException("TiketType не найден");
-        var pr = _uow.GetObjectByKey<Preority>(tiket.Preorety) ?? throw new KeyNotFoundException("Preority не найден");
-        var md = _uow.GetObjectByKey<Mode>(tiket.Mode) ?? throw new KeyNotFoundException("Mode не найден");
-        var sc = _uow.GetObjectByKey<SubCategory>(tiket.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
-        var cat = _uow.GetObjectByKey<Category>(tiket.Category) ?? throw new KeyNotFoundException("Category не найден");
-        var au = _uow.GetObjectByKey<Author>(tiket.Author) ?? throw new KeyNotFoundException("Author не найден");
-        var pl = _uow.GetObjectByKey<Platform>(tiket.Platform) ?? throw new KeyNotFoundException("Platform не найден");
-        var com = _uow.GetObjectByKey<Company>(tiket.Company) ?? throw new KeyNotFoundException("Company не найден");
+        var user = _uow.GetObjectByKey<User>(tiket.User.Oid) ?? throw new KeyNotFoundException("Пользователь не найден");
+        var wp = _uow.GetObjectByKey<WorkSpace>(tiket.WorkSpace.Oid) ?? throw new KeyNotFoundException("WorkSpace не найден");
+        var st = _uow.GetObjectByKey<State>(tiket.State.Oid) ?? throw new KeyNotFoundException("State не найден");
+        var tt = _uow.GetObjectByKey<TiketType>(tiket.TypeTiket.Oid) ?? throw new KeyNotFoundException("TiketType не найден");
+        var pr = _uow.GetObjectByKey<Preority>(tiket.Preorety.Oid) ?? throw new KeyNotFoundException("Preority не найден");
+        var md = _uow.GetObjectByKey<Mode>(tiket.Mode.Oid) ?? throw new KeyNotFoundException("Mode не найден");
+        var sc = _uow.GetObjectByKey<SubCategory>(tiket.SubCategory.Oid) ?? throw new KeyNotFoundException("SubCategory не найден");
+        var cat = _uow.GetObjectByKey<Category>(tiket.Category.Oid) ?? throw new KeyNotFoundException("Category не найден");
+        var au = _uow.GetObjectByKey<Author>(tiket.Author.Oid) ?? throw new KeyNotFoundException("Author не найден");
+        var pl = _uow.GetObjectByKey<Platform>(tiket.Platform.Oid) ?? throw new KeyNotFoundException("Platform не найден");
+        var com = _uow.GetObjectByKey<Company>(tiket.Company.Oid) ?? throw new KeyNotFoundException("Company не найден");
 
         var tiketDto = new TiketResponseDto
         {

@@ -28,7 +28,14 @@ public class Tiket : XPObject
         private DateTime _dataModefire;
         private User _user;
         private DateTime? _dueDate;
+    private string _email;
+    private string _messageId;
 
+    [Association("Tiket-TiketMessages")]
+    public XPCollection<TiketComment> Messages
+    {
+        get { return GetCollection<TiketComment>(nameof(Messages)); }
+    }
     public string Title
         {
             get => _title;
@@ -162,6 +169,16 @@ public class Tiket : XPObject
     {
         get => _dueDate;
         set => SetPropertyValue(nameof(DueDate), ref _dueDate, value);
+    }
+    public String Email
+    {
+        get => _email;
+        set => SetPropertyValue(nameof(Email), ref _email, value);
+    }
+    public String MessageId
+    {
+        get => _messageId;
+        set => SetPropertyValue(nameof(MessageId), ref _messageId, value);
     }
 
 

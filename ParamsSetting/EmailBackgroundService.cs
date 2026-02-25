@@ -28,8 +28,9 @@
 
                 foreach (var email in emails)
                 {
+                  
                     var tiket = tiketFromEmail.CreateTiketFromEmail(email);
-                    Console.WriteLine($"Создан тикет: {tiket?.Title}");
+                    
                 }
 
             }

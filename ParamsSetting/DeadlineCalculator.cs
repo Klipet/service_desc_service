@@ -14,7 +14,7 @@ public class DeadlineCalculator
         var holidays = GetHolidays();
         var schedule = GetSchedule();
 
-        var current = DateTime.UtcNow;
+        var current = DateTime.Now;
         var hoursLeft = deadlineHours;
 
         int safetyCounter = 0;

@@ -1,6 +1,5 @@
 ﻿using DevExpress.Xpo;
 [Persistent("Tiket")]
-[DeferredDeletion(false)]
 
 public class Tiket : XPObject
 {
@@ -28,13 +27,19 @@ public class Tiket : XPObject
         private DateTime _dataModefire;
         private User _user;
         private DateTime? _dueDate;
-    private string _email;
-    private string _messageId;
+        private string _email;
+        private string _messageId;
 
     [Association("Tiket-TiketMessages")]
     public XPCollection<TiketComment> Messages
     {
         get { return GetCollection<TiketComment>(nameof(Messages)); }
+    }
+
+    [Association("Tiket-Solutions")]
+    public XPCollection<TiketSolution> Solutions
+    {
+        get { return GetCollection<TiketSolution>(nameof(Solutions)); }
     }
     public string Title
         {

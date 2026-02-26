@@ -22,7 +22,11 @@ public class Program
         });
 
         builder.Services.AddSingleton<EmailService>();
+        builder.Services.AddSingleton<EmailSenderService>();
         builder.Services.AddHostedService<EmailBackgroundService>();
+        builder.Services.AddHostedService<EmailSenderBackgroundService>();
+        builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+
         builder.Services.AddTransient<TiketFromEmail>(); // ← эта строка отсутствует
         builder.Services.AddSingleton<GenerateJwtToken>();
         builder.Services.AddEndpointsApiExplorer();

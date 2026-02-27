@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/settings/schedule")]
+[Route("[controller]")]
 public class WorkScheduleController : ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -25,8 +25,8 @@ public class WorkScheduleController : ControllerBase
         return Ok(list);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] WorkScheduleDto dto)
+    [HttpPut("Update[controller]")]
+    public IActionResult Update([FromQuery] int id, [FromBody] WorkScheduleDto dto)
     {
         var s = _uow.GetObjectByKey<WorkSchedule>(id);
         if (s == null) return NotFound();

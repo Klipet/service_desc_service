@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class UserController: ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -85,8 +85,8 @@ public class UserController: ControllerBase
         return Ok(resaultUser);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult UpdateUser(int id, [FromBody] UserDto userModel) 
+    [HttpPut("Update[controller]")]
+    public IActionResult UpdateUser([FromQuery]int id, [FromBody] UserDto userModel) 
     {
         try
         {
@@ -114,8 +114,8 @@ public class UserController: ControllerBase
     }
 
 
-    [HttpGet("{id}")]
-    public IActionResult UserGetById(int id) 
+    [HttpGet("Get[controller]ById")]
+    public IActionResult UserGetById([FromQuery]int id) 
     {
         var user = _uow.GetObjectByKey<User>(id);
         if (user == null) return NotFound("User not found");
@@ -178,8 +178,8 @@ public class UserController: ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult DeleteUser(int id) {
+    [HttpDelete("Delete[controller]ById")]
+    public IActionResult DeleteUser([FromQuery] int id) {
         try
         {
             var user = _uow.Query<User>().FirstOrDefault(u => u.Oid == id);

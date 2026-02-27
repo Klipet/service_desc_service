@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 
 public class CompanyController: ControllerBase
 {
@@ -42,8 +42,8 @@ public class CompanyController: ControllerBase
         }
     }
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    [HttpGet("Get[controller]ById")]
+    public IActionResult GetById([FromQuery] int id)
     {
         var category = _uow.GetObjectByKey<Company>(id);
         if (category == null) return NotFound();
@@ -99,8 +99,8 @@ public class CompanyController: ControllerBase
         return Ok(resault);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] Company dto)
+    [HttpPut("Update[controller]ById")]
+    public IActionResult Update([FromQuery] int id, [FromBody] Company dto)
     {
         try
         {
@@ -124,8 +124,8 @@ public class CompanyController: ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("Delete[controller]ById")]
+    public IActionResult Delete([FromQuery] int id)
     {
         try
         {

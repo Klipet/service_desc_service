@@ -11,6 +11,10 @@ public class EmailQueue: XPObject
     private DateTime _createdAt;
     private DateTime? _sentAt;
     private string _errorMessage;
+    private bool _isHtml;
+    private int _retryCount;
+    private DateTime _lastAttemptAt;
+
     public string To
     {
         get => _to;
@@ -35,6 +39,23 @@ public class EmailQueue: XPObject
     {
         get => _isSent;
         set => SetPropertyValue(nameof(IsSent), ref _isSent, value);
+    }
+    public bool IsHtml
+    {
+        get => _isHtml;
+        set => SetPropertyValue(nameof(IsHtml), ref _isHtml, value);
+    }
+
+    public int RetryCount
+    {
+        get => _retryCount;
+        set => SetPropertyValue(nameof(RetryCount), ref _retryCount, value);
+    }
+
+    public DateTime LastAttemptAt
+    {
+        get => _lastAttemptAt;
+        set => SetPropertyValue(nameof(LastAttemptAt), ref _lastAttemptAt, value);
     }
 
     public DateTime CreatedAt

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public abstract class BaseController<TModel, TDto> : ControllerBase
     where TModel : BaseEntity
     where TDto : BaseDto, new()
@@ -25,7 +25,7 @@ public abstract class BaseController<TModel, TDto> : ControllerBase
 
     protected abstract TModel CreateModel(TDto dto);
 
-    [HttpGet]
+    [HttpGet("All[controller]")]
     public IActionResult GetAll()
     {
         try
@@ -36,8 +36,8 @@ public abstract class BaseController<TModel, TDto> : ControllerBase
         catch (Exception ex) { return StatusCode(500, ex.Message); }
     }
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    [HttpGet("Get[controller]ById")]
+    public IActionResult GetById([FromQuery] int id)
     {
         try
         {
@@ -48,7 +48,7 @@ public abstract class BaseController<TModel, TDto> : ControllerBase
         catch (Exception ex) { return StatusCode(500, ex.Message); }
     }
 
-    [HttpPost]
+    [HttpPost("New[controller]")]
     public IActionResult Create([FromBody] TDto dto)
     {
         try
@@ -61,8 +61,8 @@ public abstract class BaseController<TModel, TDto> : ControllerBase
         catch (Exception ex) { return StatusCode(500, ex.Message); }
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] TDto dto)
+    [HttpPut("Upadate[controller]ById")]
+    public IActionResult Update([FromQuery] int id, [FromBody] TDto dto)
     {
         try
         {
@@ -77,8 +77,8 @@ public abstract class BaseController<TModel, TDto> : ControllerBase
         catch (Exception ex) { return StatusCode(500, ex.Message); }
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("Delete[controller]ById")]
+    public IActionResult Delete([FromQuery] int id)
     {
         try
         {

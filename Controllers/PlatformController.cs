@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class PlatformController: ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -10,7 +10,7 @@ public class PlatformController: ControllerBase
     {_uow = uow;}
 
 
-    [HttpGet]
+    [HttpGet("GetAll[controller]")]
     public IActionResult GetAll()
     {
         try
@@ -39,7 +39,7 @@ public class PlatformController: ControllerBase
         }
     }
 
-    [HttpPost]
+    [HttpPost("New[controller]")]
     public IActionResult Create([FromBody] PlatformDto model)
     {
         using var uow = MyXPO.GetNewUnitOfWork();
@@ -78,8 +78,8 @@ public class PlatformController: ControllerBase
         return Ok(resault);
     }
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    [HttpGet("Get[controller]ById")]
+    public IActionResult GetById([FromQuery] int id)
     {
         var category = _uow.GetObjectByKey<Platform>(id);
         if (category == null) return NotFound();
@@ -99,8 +99,8 @@ public class PlatformController: ControllerBase
         return Ok(categoriResponse);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] PlatformDto dto)
+    [HttpPut("Update[controller]ById")]
+    public IActionResult Update([FromQuery] int id, [FromBody] PlatformDto dto)
     {
         try
         {
@@ -126,8 +126,8 @@ public class PlatformController: ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("Delete[controller]")]
+    public IActionResult Delete([FromQuery] int id)
     {
         try
         {

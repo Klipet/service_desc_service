@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/settings/holidays")]
+[Route("Settings/[controller]")]
 public class HolidayController : ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -35,8 +35,8 @@ public class HolidayController : ControllerBase
         return Ok(new { h.Oid, h.Name, h.Date, h.IsRecurringYearly });
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("Delete[controller]")]
+    public IActionResult Delete([FromQuery]int id)
     {
         var h = _uow.GetObjectByKey<HolidayDay>(id);
         if (h == null) return NotFound();

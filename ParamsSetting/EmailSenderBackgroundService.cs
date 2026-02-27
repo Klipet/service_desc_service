@@ -23,12 +23,13 @@ public class EmailSenderBackgroundService: BackgroundService
             {
                 using var scope = _scopeFactory.CreateScope();
                 using var uow = MyXPO.GetNewUnitOfWork();
+
                 var sender = scope.ServiceProvider
                     .GetRequiredService<EmailSenderService>();
 
                 var emails = new XPCollection<EmailQueue>(
                     uow,
-                    CriteriaOperator.Parse("IsSent = false")
+                    CriteriaOperator.Parse("IsSent = false AND RetryCount < 5")
                 );
 
                 foreach (var email in emails)
@@ -38,16 +39,22 @@ public class EmailSenderBackgroundService: BackgroundService
                         await sender.SendEmailAsync(
                             new List<string> { email.To },
                             email.Subject,
-                            email.Body
+                            email.Body,
+                            email.IsHtml
                         );
+
                         email.IsSent = true;
                         email.SentAt = DateTime.UtcNow;
                         email.ErrorMessage = null;
                     }
                     catch (Exception ex)
                     {
+                        email.RetryCount++;
+                        email.LastAttemptAt = DateTime.Now;
                         email.ErrorMessage = ex.Message;
-                        _logger.LogError(ex, $"Ошибка отправки письма на {email.To}");
+
+                        _logger.LogError(ex,
+                            $"Ошибка отправки письма на {email.To}");
                     }
                 }
 
@@ -55,10 +62,11 @@ public class EmailSenderBackgroundService: BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка EmailSenderBackgroundService");
+                _logger.LogError(ex,
+                    "Ошибка EmailSenderBackgroundService");
             }
 
-            await Task.Delay(_interval, stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
         }
     }
 }

@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
-
 [ApiController]
-[Route("api")]
+[Route("[controller]")]
 public class TiketSolutionController: ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -34,43 +33,19 @@ public class TiketSolutionController: ControllerBase
         };
         _uow.CommitChanges();
 
-        if (solution.EmailList != null && solution.EmailList.Any())
-        {
-            var emails = solution.EmailList
-                .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(e => e.Trim())
-                .Where(e => !string.IsNullOrWhiteSpace(e));
+        // 🔥 вызываем сервис очереди
+        var emailService = new EmailQueueService(_uow);
 
-            foreach (var email in emails)
-            {
-                new EmailQueue(_uow)
-                {
-                    To = email,
-                    Subject = $"Ответ по тикету #{tiket.Oid}",
-                    Body = solution.MessageText,
-                    IsSent = false,
-                    CreatedAt = DateTime.UtcNow
-                };
-            }
-            _uow.CommitChanges();
-        }
-        else
-        {
-            new EmailQueue(_uow)
-            {
-                To = autor.Email,
-                Subject = $"Ответ по тикету #{tiket.Oid}",
-                Body = solution.MessageText,
-                IsSent = false,
-                CreatedAt = DateTime.UtcNow
-            };
-            _uow.CommitChanges();
-        }
-            return Ok();
+        emailService.EnqueueTicketAnswer(
+            tiket,
+            user,
+            solution.MessageText,
+            model.EmailList);
+        return Ok();
     }
 
-    [HttpGet("email-status/{tiketId}")]
-    public IActionResult GetEmailStatus(int tiketId)
+    [HttpGet("EmailStatis[controller]")]
+    public IActionResult GetEmailStatus([FromQuery] int tiketId)
     {
         var emails = _uow.Query<EmailQueue>()
             .Where(e => e.Subject.Contains($"#{tiketId}"))

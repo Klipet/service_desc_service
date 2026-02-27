@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/settings/priorities")]
+[Route("Settings/[controller]")]
 public class PreorityController : ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -24,8 +24,8 @@ public class PreorityController : ControllerBase
         return Ok(list);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] PreorityDto dto)
+    [HttpPut("UpdateById")]
+    public IActionResult Update([FromQuery] int id, [FromBody] PreorityDto dto)
     {
         var p = _uow.GetObjectByKey<Preority>(id);
         if (p == null) return NotFound();
@@ -35,8 +35,8 @@ public class PreorityController : ControllerBase
         _uow.CommitChanges();
         return Ok();
     }
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("Delete[controller]ById")]
+    public IActionResult Delete([FromQuery] int id)
     {
         try
         {

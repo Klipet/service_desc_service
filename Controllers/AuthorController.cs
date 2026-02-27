@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class AuthorController: ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -90,8 +90,8 @@ public class AuthorController: ControllerBase
     }
 
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    [HttpGet("GetAutorById")]
+    public IActionResult GetById([FromQuery] int id)
     {
         var author = _uow.GetObjectByKey<Author>(id);
         if (author == null) return NotFound();
@@ -113,8 +113,8 @@ public class AuthorController: ControllerBase
         return Ok(authorResponse);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] AuthorDto dto)
+    [HttpPut("UpdateAutorById")]
+    public IActionResult Update([FromQuery] int id, [FromBody] AuthorDto dto)
     {
         try
         {
@@ -141,8 +141,8 @@ public class AuthorController: ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("DeleteAutor")]
+    public IActionResult Delete([FromQuery] int id)
     {
         try
         {

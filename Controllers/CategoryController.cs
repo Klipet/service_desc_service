@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class CategoryController: ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -82,8 +82,8 @@ public class CategoryController: ControllerBase
         return Ok(resault);
     }
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    [HttpGet("Get[controller]ById")]
+    public IActionResult GetById([FromQuery] int id)
     {
         var category = _uow.GetObjectByKey<Category>(id);
         if (category == null) return NotFound();
@@ -102,7 +102,7 @@ public class CategoryController: ControllerBase
         return Ok(categoriResponse);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("Update[controller]ById")]
     public IActionResult Update(int id, [FromBody] CategoryDto dto)
     {
         try
@@ -130,7 +130,7 @@ public class CategoryController: ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("Delete[controller]ById")]
     public IActionResult Delete(int id)
     {
         try

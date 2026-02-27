@@ -3,7 +3,7 @@ using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class TiketLogController: ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -50,8 +50,8 @@ public class TiketLogController: ControllerBase
             return StatusCode(500, $"Ошибка: {ex.Message}");
         }
     }
-    [HttpGet("{tiketId}")]
-    public IActionResult GetByTiketId(int tiketId)
+    [HttpGet("Get[controller]ById")]
+    public IActionResult GetByTiketId([FromQuery]int tiketId)
     {
         var tiketLog = _uow.Query<TiketLog>().Where(t => t.TiketId == tiketId).ToList();
         if (!tiketLog.Any()) return NotFound($"Лог для тикета с Id {tiketId} не найден");

@@ -8,5 +8,7 @@ public class State: BaseEntity
     [Association("State-Tikets")]
     public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
 
+    [Association("State-EmailTemplates")]
+    public XPCollection<EmailTemplate> EmailTemplates => GetCollection<EmailTemplate>(nameof(EmailTemplates));
 }
 

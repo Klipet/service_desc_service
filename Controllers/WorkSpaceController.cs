@@ -1,8 +1,7 @@
 ﻿
 using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
-[ApiController]
-[Route("api/[controller]")]
+
 public class WorkSpaceController : BaseController<WorkSpace, WorkSpaceDto>
 {
     public WorkSpaceController(UnitOfWork uow): base(uow) { }

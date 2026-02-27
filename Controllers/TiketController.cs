@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
-[Route("api")]
+[Route("[controller]")]
 public class TiketController : ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -267,7 +267,7 @@ public class TiketController : ControllerBase
 
 
 
-    [HttpDelete("delete")]
+    [HttpDelete("Delete")]
     public IActionResult Delete([FromQuery] int id)
     {
         try

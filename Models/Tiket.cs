@@ -30,6 +30,9 @@ public class Tiket : XPObject
         private string _email;
         private string _messageId;
 
+    [Association("Tiket-TiketFiles")]
+    public XPCollection<TiketFile> Files => GetCollection<TiketFile>(nameof(Files));
+
     [Association("Tiket-TiketMessages")]
     public XPCollection<TiketComment> Messages
     {

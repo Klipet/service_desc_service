@@ -56,6 +56,9 @@
     public string CompanyName { get; set; } = string.Empty;
     public int CompanyId { get; set; }
     public DateTime DueDate { get; set; }
+
+    public List<TiketFileDto> Files { get; set; } = new();
+    public List<TiketSolutionDto> Solution { get; set; } = new();
 }
 
 public class TiketPostDto

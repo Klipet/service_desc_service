@@ -39,6 +39,8 @@ public class EmailQueueService
             recipients = new List<string> { tiket.Author?.Email };
         }
 
+
+
         foreach (var email in recipients)
         {
             new EmailQueue(_uow)

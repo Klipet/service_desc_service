@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
-
-public class CompanyController: ControllerBase
+[ApiKey]
+public class CompanyController : ControllerBase
 {
     private readonly UnitOfWork _uow;
     public CompanyController(UnitOfWork uow)
@@ -12,9 +12,20 @@ public class CompanyController: ControllerBase
         _uow = uow;
     }
 
+    private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
+
+    // Проверка права
+    private bool HasPermission(string code) =>
+        CurrentUser?.RoleUser?.RolePermissions
+            .Any(rp => rp.Permission.Name == code
+                    && rp.Permission.IsActive) ?? false;
+
     [HttpGet]
     public IActionResult GetAll()
     {
+        if (!HasPermission(PermisionConstant.UserRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         try
         {
 
@@ -45,6 +56,9 @@ public class CompanyController: ControllerBase
     [HttpGet("Get[controller]ById")]
     public IActionResult GetById([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.UserRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         var category = _uow.GetObjectByKey<Company>(id);
         if (category == null) return NotFound();
 
@@ -66,6 +80,8 @@ public class CompanyController: ControllerBase
     [HttpPost]
     public IActionResult Create([FromBody] CompanyDto model)
     {
+        if (!HasPermission(PermisionConstant.UserCreate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
@@ -74,7 +90,7 @@ public class CompanyController: ControllerBase
             Name = model.Name,
             Active = model.Active,
             DateCreated = model.DateCreated,
-            Idnp=model.Idnp,
+            Idnp = model.Idnp,
             VipState = model.VipState,
         };
 
@@ -102,6 +118,8 @@ public class CompanyController: ControllerBase
     [HttpPut("Update[controller]ById")]
     public IActionResult Update([FromQuery] int id, [FromBody] Company dto)
     {
+        if (!HasPermission(PermisionConstant.UserUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
 
@@ -127,6 +145,8 @@ public class CompanyController: ControllerBase
     [HttpDelete("Delete[controller]ById")]
     public IActionResult Delete([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.UserDelete))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             // Ищем через сессию явно

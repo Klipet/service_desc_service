@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
-public class AuthorController: ControllerBase
+[ApiKey]
+public class AuthorController : ControllerBase
 {
     private readonly UnitOfWork _uow;
     public AuthorController(UnitOfWork uow)
@@ -11,9 +12,20 @@ public class AuthorController: ControllerBase
         _uow = uow;
     }
 
-    [HttpGet]
+    private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
+
+    // Проверка права
+    private bool HasPermission(string code) =>
+        CurrentUser?.RoleUser?.RolePermissions
+            .Any(rp => rp.Permission.Name == code
+                    && rp.Permission.IsActive) ?? false;
+
+    [HttpGet("GetAll[controller]")]
     public IActionResult GetAll()
     {
+
+        if (!HasPermission(PermisionConstant.AuthorRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
 
@@ -28,7 +40,7 @@ public class AuthorController: ControllerBase
                 phone = t.Phone,
                 email = t.Email,
                 DateCreated = t.DateCreated,
-                DateModifire =  t.DateModified,
+                DateModifire = t.DateModified,
 
             }).ToList();
 
@@ -40,9 +52,11 @@ public class AuthorController: ControllerBase
         }
     }
 
-    [HttpPost]
+    [HttpPost("Create[controller]")]
     public IActionResult Create([FromBody] AuthorDto model)
     {
+        if (!HasPermission(PermisionConstant.AuthorCreate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             using var uow = MyXPO.GetNewUnitOfWork();
@@ -93,6 +107,9 @@ public class AuthorController: ControllerBase
     [HttpGet("GetAutorById")]
     public IActionResult GetById([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.AuthorRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         var author = _uow.GetObjectByKey<Author>(id);
         if (author == null) return NotFound();
 
@@ -116,6 +133,9 @@ public class AuthorController: ControllerBase
     [HttpPut("UpdateAutorById")]
     public IActionResult Update([FromQuery] int id, [FromBody] AuthorDto dto)
     {
+
+        if (!HasPermission(PermisionConstant.AuthorUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             var author = _uow.Query<Author>().FirstOrDefault(t => t.Oid == id);
@@ -144,14 +164,16 @@ public class AuthorController: ControllerBase
     [HttpDelete("DeleteAutor")]
     public IActionResult Delete([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.AuthorDelete))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             // Ищем через сессию явно
-            var author= _uow.Query<Author>()
+            var author = _uow.Query<Author>()
             .FirstOrDefault(t => t.Oid == id);
 
 
-            if (author == null)return NotFound($"Author с id={id} не найден");
+            if (author == null) return NotFound($"Author с id={id} не найден");
 
             // Удаляем
             _uow.Delete(author);
@@ -165,4 +187,5 @@ public class AuthorController: ControllerBase
         }
     }
 }
+
 

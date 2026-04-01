@@ -1,4 +1,5 @@
 ﻿using DevExpress.Xpo;
+using System.Data;
 
 [Persistent("User")]
 public class User: XPObject
@@ -11,9 +12,18 @@ public class User: XPObject
     private string _passwordHash;
     private string _phone;
     private string _loghin;
+    private string _apiKey;
     private WorkSpace _workSpace;
     private DateTime _dateCreated;
+    private Role _role;
 
+
+    [Association("Role-Users")]
+    public Role RoleUser
+    {
+        get => _role;
+        set => SetPropertyValue(nameof(RoleUser), ref _role, value);
+    }
 
     [Association("User-Tikets")]
     public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
@@ -58,6 +68,11 @@ public class User: XPObject
     {
         get => _dateCreated;
         set => SetPropertyValue(nameof(DateCreated), ref _dateCreated, value);
+    }
+    public String ApiKey
+    {
+        get => _apiKey;
+        set => SetPropertyValue(nameof(ApiKey), ref _apiKey, value);
     }
 }
 

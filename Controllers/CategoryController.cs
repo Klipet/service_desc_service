@@ -5,24 +5,34 @@ using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
 [Route("[controller]")]
-public class CategoryController: ControllerBase
+[ApiKey]
+public class CategoryController : ControllerBase
 {
     private readonly UnitOfWork _uow;
     public CategoryController(UnitOfWork uow)
     {
         _uow = uow;
     }
+    private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
+
+    // Проверка права
+    private bool HasPermission(string code) =>
+        CurrentUser?.RoleUser?.RolePermissions
+            .Any(rp => rp.Permission.Name == code
+                    && rp.Permission.IsActive) ?? false;
 
 
     [HttpGet]
     public IActionResult GetAll()
     {
+        if (!HasPermission(PermisionConstant.CategoryRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
 
             var category = _uow.Query<Category>().ToList();
             Console.WriteLine($"Найдено тикетов: {category.Count}");
-            
+
 
             var result = category.Select(t => new CategoryDto
             {
@@ -32,7 +42,7 @@ public class CategoryController: ControllerBase
                 subCategoryId = t.SubCategory.Oid,
                 subCategoryName = t.SubCategory.Name,
                 DateCreated = t.DateCreated,
-                
+
             }).ToList();
 
             return Ok(result);
@@ -47,6 +57,10 @@ public class CategoryController: ControllerBase
     [HttpPost]
     public IActionResult Create([FromBody] CategoryDto model)
     {
+        if (!HasPermission(PermisionConstant.CategoryCreate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
+
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
@@ -85,11 +99,14 @@ public class CategoryController: ControllerBase
     [HttpGet("Get[controller]ById")]
     public IActionResult GetById([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.CategoryRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         var category = _uow.GetObjectByKey<Category>(id);
         if (category == null) return NotFound();
 
         var sc = _uow.GetObjectByKey<SubCategory>(category.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
-        
+
         var categoriResponse = new CategoryDto
         {
             Oid = category.Oid,
@@ -105,6 +122,9 @@ public class CategoryController: ControllerBase
     [HttpPut("Update[controller]ById")]
     public IActionResult Update(int id, [FromBody] CategoryDto dto)
     {
+
+        if (!HasPermission(PermisionConstant.CategoryUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
 
@@ -133,6 +153,8 @@ public class CategoryController: ControllerBase
     [HttpDelete("Delete[controller]ById")]
     public IActionResult Delete(int id)
     {
+        if (!HasPermission(PermisionConstant.CategoryDelete))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             // Ищем через сессию явно

@@ -25,4 +25,5 @@ public class UserResponseDto
     public string WorkSpaceName { get; set; }
     public int WorkSpaceId { get; set; }
     public DateTime DateCreated { get; set; }
+    public string ApiKey { get;set; }
 }

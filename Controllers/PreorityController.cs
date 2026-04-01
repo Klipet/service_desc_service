@@ -3,14 +3,26 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("Settings/[controller]")]
+[ApiKey]
 public class PreorityController : ControllerBase
 {
     private readonly UnitOfWork _uow;
     public PreorityController(UnitOfWork uow) => _uow = uow;
 
+    private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
+
+    // Проверка права
+    private bool HasPermission(string code) =>
+        CurrentUser?.RoleUser?.RolePermissions
+            .Any(rp => rp.Permission.Name == code
+                    && rp.Permission.IsActive) ?? false;
+
     [HttpGet]
     public IActionResult GetAll()
     {
+        if (!HasPermission(PermisionConstant.PreorityRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         var list = new XPCollection<Preority>(_uow)
             .Select(p => new
             {
@@ -27,6 +39,8 @@ public class PreorityController : ControllerBase
     [HttpPut("UpdateById")]
     public IActionResult Update([FromQuery] int id, [FromBody] PreorityDto dto)
     {
+        if (!HasPermission(PermisionConstant.PreorityUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         var p = _uow.GetObjectByKey<Preority>(id);
         if (p == null) return NotFound();
         p.Name = dto.Name;
@@ -38,6 +52,8 @@ public class PreorityController : ControllerBase
     [HttpDelete("Delete[controller]ById")]
     public IActionResult Delete([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.PreorityDelete))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             // Ищем через сессию явно
@@ -63,6 +79,8 @@ public class PreorityController : ControllerBase
     [HttpGet("GetTicketById")]
     public IActionResult GetById([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.PreorityRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         var preority = _uow.GetObjectByKey<Preority>(id);
         if (preority == null) return NotFound();
 

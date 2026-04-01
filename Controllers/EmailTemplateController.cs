@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
+[ApiKey]
 public class EmailTemplateController : ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -10,10 +11,20 @@ public class EmailTemplateController : ControllerBase
     {
         _uow = uow;
     }
+    private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
+
+    // Проверка права
+    private bool HasPermission(string code) =>
+        CurrentUser?.RoleUser?.RolePermissions
+            .Any(rp => rp.Permission.Name == code
+                    && rp.Permission.IsActive) ?? false;
 
     [HttpPost("NewTempalte")]
     public IActionResult Create([FromBody] EmailTemplateDto model)
     {
+        if (!HasPermission(PermisionConstant.EmailTemplateCreate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         if (model == null) return BadRequest("Data is null");
 
         var state = _uow.Query<State>().FirstOrDefault(s => s.Oid == model.StateOid) ??
@@ -38,7 +49,11 @@ public class EmailTemplateController : ControllerBase
     }
 
     [HttpGet("GetAllTemplate")]
-    public IActionResult GetAll() {
+    public IActionResult GetAll() 
+    {
+        if (!HasPermission(PermisionConstant.EmailTemplateRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         try
         {
             var tempate = _uow.Query<EmailTemplate>().ToList();
@@ -65,6 +80,8 @@ public class EmailTemplateController : ControllerBase
     [HttpGet("GetTempalteById")]
     public IActionResult GetById([FromQuery] int id) 
     {
+        if (!HasPermission(PermisionConstant.EmailTemplateRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         var tempalte = _uow.GetObjectByKey<EmailTemplate>(id);
         if(tempalte == null) return NotFound();
 
@@ -87,6 +104,8 @@ public class EmailTemplateController : ControllerBase
     [HttpDelete("DeleteTemplate")]
     public IActionResult Delete([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.EmailTemplateDelete))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             // Ищем через сессию явно

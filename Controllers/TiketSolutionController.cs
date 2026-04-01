@@ -5,6 +5,7 @@ using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
 [ApiController]
 [Route("[controller]")]
+[ApiKey]
 public class TiketSolutionController: ControllerBase
 {
     private readonly UnitOfWork _uow;
@@ -13,9 +14,20 @@ public class TiketSolutionController: ControllerBase
         _uow = uow;
     }
 
+    private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
+
+    // Проверка права
+    private bool HasPermission(string code) =>
+        CurrentUser?.RoleUser?.RolePermissions
+            .Any(rp => rp.Permission.Name == code
+                    && rp.Permission.IsActive) ?? false;
+
     [HttpPost("Solution")]
     public IActionResult Create([FromBody] TiketSolutionDto model)
     {
+        if (!HasPermission(PermisionConstant.TicketUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         if (model == null) return BadRequest("Data is null");
 
         var tiket = GetOrFail<Tiket>(_uow, model.Tiket, "Tiket");
@@ -40,13 +52,28 @@ public class TiketSolutionController: ControllerBase
             tiket,
             user,
             solution.MessageText,
-            model.EmailList);
-        return Ok();
+            model.EmailList
+            );
+
+        var resault = new TiketSolutionDto
+        {
+            Id = solution.Oid,
+            Tiket = solution.Tiket.Oid,
+            Author = solution.Author.Oid,
+            User = solution.User.Oid,
+            CreatedAt = solution.CreatedAt,
+            MessageText = solution.MessageText,
+            EmailList = solution.EmailListParsed
+        };
+        return Ok(resault);
     }
 
     [HttpGet("EmailStatis[controller]")]
     public IActionResult GetEmailStatus([FromQuery] int tiketId)
     {
+        if (!HasPermission(PermisionConstant.TicketRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         var emails = _uow.Query<EmailQueue>()
             .Where(e => e.Subject.Contains($"#{tiketId}"))
             .Select(e => new { e.To, e.IsSent, e.ErrorMessage, e.SentAt })

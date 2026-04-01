@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
+[ApiKey]
 [Route("[controller]")]
 public class PlatformController: ControllerBase
 {
@@ -9,13 +10,22 @@ public class PlatformController: ControllerBase
     public PlatformController(UnitOfWork uow)
     {_uow = uow;}
 
+    private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
+
+    // Проверка права
+    private bool HasPermission(string code) =>
+        CurrentUser?.RoleUser?.RolePermissions
+            .Any(rp => rp.Permission.Name == code
+                    && rp.Permission.IsActive) ?? false;
 
     [HttpGet("GetAll[controller]")]
     public IActionResult GetAll()
     {
+
+        if (!HasPermission(PermisionConstant.PlatformRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
-
             var platform = _uow.Query<Platform>().ToList();
             Console.WriteLine($"Найдено Company: {platform.Count}");
 
@@ -42,6 +52,9 @@ public class PlatformController: ControllerBase
     [HttpPost("New[controller]")]
     public IActionResult Create([FromBody] PlatformDto model)
     {
+        if (!HasPermission(PermisionConstant.PlatformCreate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
@@ -81,6 +94,8 @@ public class PlatformController: ControllerBase
     [HttpGet("Get[controller]ById")]
     public IActionResult GetById([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.PlatformRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         var category = _uow.GetObjectByKey<Platform>(id);
         if (category == null) return NotFound();
 
@@ -102,9 +117,10 @@ public class PlatformController: ControllerBase
     [HttpPut("Update[controller]ById")]
     public IActionResult Update([FromQuery] int id, [FromBody] PlatformDto dto)
     {
+        if (!HasPermission(PermisionConstant.PlatformUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
-
             var platform = _uow.Query<Platform>().FirstOrDefault(t => t.Oid == id);
 
             if (platform == null) return NotFound($"Рабочее место с Id {id} не найден");
@@ -129,6 +145,8 @@ public class PlatformController: ControllerBase
     [HttpDelete("Delete[controller]")]
     public IActionResult Delete([FromQuery] int id)
     {
+        if (!HasPermission(PermisionConstant.PlatformDelete))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             // Ищем через сессию явно

@@ -11,6 +11,10 @@ public class TiketSolution: XPObject
     private DateTime _createdAt;
     private string _emailList;
 
+
+    [Association("TiketSolution-TiketFiles")]
+    public XPCollection<TiketFile> Files => GetCollection<TiketFile>(nameof(Files));
+
     [Association("Tiket-Solutions")]
     public Tiket Tiket
     {

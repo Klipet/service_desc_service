@@ -12,6 +12,7 @@ public class User: XPObject
     private string _passwordHash;
     private string _phone;
     private string _loghin;
+    private bool _isActive;
     private string _apiKey;
     private WorkSpace _workSpace;
     private DateTime _dateCreated;
@@ -27,6 +28,12 @@ public class User: XPObject
 
     [Association("User-Tikets")]
     public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
+
+    public bool IsActive
+    {
+        get => _isActive;
+        set => SetPropertyValue(nameof(IsActive), ref _isActive, value);
+    }
 
     public string Name
     {

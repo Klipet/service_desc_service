@@ -19,7 +19,16 @@ public class ReportConfig : XPObject
     private bool _sortDescending;
     private int? _filterAuthor;
     public int? _filterUser;
+    public int? _filterCompany;
+    private DateGroupingLevel _dateGrouping;
 
+    [Persistent]
+    public DateGroupingLevel DateGrouping
+    { get => _dateGrouping; set => SetPropertyValue(nameof(DateGrouping), ref _dateGrouping, value); }
+
+    [Persistent]
+    public int? FilterCompany
+    { get => _filterCompany; set => SetPropertyValue(nameof(FilterCompany), ref _filterCompany, value); }
 
     [Persistent]
     public int? FilterUser

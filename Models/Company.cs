@@ -1,4 +1,5 @@
 ﻿using DevExpress.Xpo;
+using DocumentFormat.OpenXml.ExtendedProperties;
 using System.Runtime.InteropServices;
 
 [Persistent("Company")]
@@ -7,7 +8,7 @@ public class Company: BaseEntity
     public Company(Session session) : base(session) { }
 
     public Platform _platform;
-    public bool _vipState;
+    public CompanyState _companyState;
     public string _idnp;
 
     [Association("Company-Tikets")]
@@ -15,11 +16,14 @@ public class Company: BaseEntity
 
     [Association("Platforms-Companys")]
     public XPCollection<Platform> Platforms => GetCollection<Platform>(nameof(Platforms));
-    public bool VipState
+
+    [Association("CompanysState-Companys")]
+    public CompanyState CompanyState
     {
-        get => _vipState;
-        set => SetPropertyValue(nameof(VipState), ref _vipState, value);
+        get => _companyState;
+        set => SetPropertyValue(nameof(CompanyState), ref _companyState, value);
     }
+
     public string Idnp
     {
         get => _idnp;

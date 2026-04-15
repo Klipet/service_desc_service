@@ -12,6 +12,7 @@ public class ReportRepository : IReportRepository
         var category = _uow.Query<Tiket>().FirstOrDefault(t => t.Category.Oid == request.FilterCategory);
         var preority = _uow.Query<Tiket>().FirstOrDefault(t => t.Preorety.Oid == request.FilterPriority);
         var author = _uow.Query<Tiket>().FirstOrDefault(t => t.Author.Oid == request.FilterAuthorId);
+        var company = _uow.Query<Tiket>().FirstOrDefault(t => t.Company.Oid == request.FilterCompanyId);
 
         var config = new ReportConfig(_uow)
         {
@@ -23,6 +24,7 @@ public class ReportRepository : IReportRepository
             FilterCategory = category.Oid,
             FilterPriority = preority.Oid,
             SortDescending = request.SortDescending,
+            FilterCompany = company.Oid,
             CreatedAt = DateTime.Now,
             GroupBy = Enum.TryParse<ReportGroupBy>(request.GroupBy, out var g) ? g : ReportGroupBy.None,
             SortBy = Enum.TryParse<ReportSortBy>(request.SortBy, out var s) ? s : ReportSortBy.Count,

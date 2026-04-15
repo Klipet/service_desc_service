@@ -12,59 +12,82 @@ public class EmptyDataDB
             new State(uow) { Name = "Открыт" };
             new State(uow) { Name = "Закрыт" };
             new State(uow) { Name = "В процессе" };
+            
         }
         if (!uow.Query<Preority>().Any())
         {
             new Preority(uow) { Name = "Низкий" };
             new Preority(uow) { Name = "Средний" };
             new Preority(uow) { Name = "Высокий" };
+            
         }
         if (!uow.Query<WorkSpace>().Any())
         {
             new WorkSpace(uow) { Name = "Тех-отдел" };
+            
         }
         if (!uow.Query<TiketType>().Any())
         {
             new TiketType(uow) { Name = "E-mail" };
+            
         }
 
         if (!uow.Query<TiketType>().Any())
         {
             new TiketType(uow) { Name = "Нормальный" };
+           
         }
 
         if (!uow.Query<TiketType>().Any())
         {
             new TiketType(uow) { Name = "Нормальный" };
+            
         }
 
         if (!uow.Query<SubCategory>().Any())
         {
             new SubCategory(uow) { Name = "Нормальный" };
+           
         }
         if (!uow.Query<Category>().Any())
         {
             new Category(uow) { Name = "Нормальный" };
+           
         }
 
         if (!uow.Query<Author>().Any())
         {
             new Author(uow) { Name = "Нормальный" };
+            
+        }
+        if (!uow.Query<User>().Any())
+        {
+            new User(uow) { Name = "Admin", Loghin = "Admin", PasswordHash= BCrypt.Net.BCrypt.HashPassword("Admin"), };
+            
         }
 
         if (!uow.Query<Platform>().Any())
         {
             new Platform(uow) { Name = "Нормальный" };
+          
         }
 
+        if (!uow.Query<CompanyState>().Any())
+        {
+            new CompanyState(uow) { Name = "Нормальный"};
+            new CompanyState(uow) { Name = "VIP"};
+           
+        }
         if (!uow.Query<Company>().Any())
         {
-            new Company(uow) { Name = "Нормальный" };
+            new Company(uow) { Name = "Нормальный"};
+          
         }
 
         if (!uow.Query<Mode>().Any())
         {
             new Mode(uow) { Name = "Нормальный" };
+        
         }
 
         if (!uow.Query<HolidayDay>().Any())
@@ -91,6 +114,7 @@ public class EmptyDataDB
                     IsRecurringYearly = true
                 };
             }
+           
 
         }
         if (!uow.Query<Role>().Any())
@@ -98,12 +122,13 @@ public class EmptyDataDB
             var adminRole = new Role(uow) { Name = "Admin", IsActive = true };
             var supportRole = new Role(uow) { Name = "Support", IsActive = true };
             var userRole = new Role(uow) { Name = "User", IsActive = true };
+          
         }
 
         if (!uow.Query<Permission>().Any())
         {
 
-            var adminPermission = uow.Query<Role>().FirstOrDefault(p => p.Name == "Admin");
+            var adminPermission = uow.Query<Role>().FirstOrDefault(p => p.Oid == 1);
             var permissions = new[]
             {
                 // Заявки
@@ -184,21 +209,21 @@ public class EmptyDataDB
                 PermisionConstant.WorkSpaceDelete,
                 PermisionConstant.WorkSpaceCreate
             };
+        }
 
-            var permissionObjects = permissions
-            .Select(p => new Permission(uow) { Name = p , IsActive = true})
-            .ToList();
-
-            // Admin — всё можно
-            foreach (var perm in permissionObjects)
+        if (!uow.Query<RolePermission>().Any())
+        {
+            var permision = uow.Query<Permission>().ToList();
+            var adminPermission = uow.Query<Role>().FirstOrDefault(p => p.Oid == 1);
+            foreach (var perm in permision)
             {
-                new RolePermission(uow)
-                {
-                    Role = adminPermission,
-                    Permission = perm
-                };
+              new RolePermission(uow)
+               {
+                Role = adminPermission,
+                Permission = perm
+               };
+               
             }
-
         }
         uow.CommitChanges();
     }

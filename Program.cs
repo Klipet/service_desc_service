@@ -1,104 +1,122 @@
 ﻿using DevExpress.Xpo;
 using DevExpress.Xpo.DB;
 using Microsoft.OpenApi.Models;
+using NLog;
+using NLog.Web;
 
 public class Program
 {
+   
     public static void Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        var core = new Core(builder.Configuration);
-        if (!core.InitializeConnection())
+    //    var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
+        try
         {
-            Console.WriteLine("[FATAL] Cannot start application: database connection failed.");
-            return;
-        }
-        core.InitializeConnection();
+            var builder = WebApplication.CreateBuilder(args);
+            builder.Logging.ClearProviders();
+            builder.Host.UseNLog();
 
-        builder.Services.AddScoped(provider => MyXPO.GetNewUnitOfWork());
-        builder.Services.AddControllers().AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-        });
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
+            var core = new Core(builder.Configuration);
+            if (!core.InitializeConnection())
             {
-                policy.WithOrigins("http://localhost:8080", "http://localhost:5000") // ← порты твоего Flutter Web
-                      .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials(); // ← обязательно для SignalR
+                Console.WriteLine("[FATAL] Cannot start application: database connection failed.");
+                return;
+            }
+            core.InitializeConnection();
+
+            builder.Services.AddScoped(provider => MyXPO.GetNewUnitOfWork());
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
-        });
-  
-        builder.Services.AddScoped<IReportService,    ReportService>();
-        builder.Services.AddScoped<IReportRepository, ReportRepository>();
 
-        builder.Services.AddSingleton<EmailService>();
-        builder.Services.AddSingleton<EmailSenderService>();
-        builder.Services.AddHostedService<EmailBackgroundService>();
-        builder.Services.AddHostedService<EmailSenderBackgroundService>();
-        builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.WithOrigins("http://localhost:8080", "http://localhost:5000") // ← порты твоего Flutter Web
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials(); // ← обязательно для SignalR
+                });
+            });
 
-        builder.Services.AddSignalR();
+            builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddScoped<IReportRepository, ReportRepository>();
 
-        builder.Services.AddTransient<TiketFromEmail>(); // ← эта строка отсутствует
-        builder.Services.AddSingleton<GenerateJwtToken>();
-        builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSingleton<EmailService>();
+            builder.Services.AddSingleton<EmailSenderService>();
+            builder.Services.AddHostedService<EmailBackgroundService>();
+            builder.Services.AddHostedService<EmailSenderBackgroundService>();
+            builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
-        builder.Services.AddControllers(options =>
-        {
-            options.Filters.Add<PermissionFilter>(); // ← добавить
-        }).AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-        });
+            builder.Services.AddSignalR();
+
+            builder.Services.AddTransient<TiketFromEmail>(); // ← эта строка отсутствует
+            builder.Services.AddSingleton<GenerateJwtToken>();
+            builder.Services.AddEndpointsApiExplorer();
+
+            builder.Services.AddControllers(options =>
+            {
+                options.Filters.Add<PermissionFilter>(); // ← добавить
+            }).AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            });
 
 
             builder.Services.AddSwaggerGen();
-        builder.Services.AddSwaggerGen(options =>
-        {
-            options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+            builder.Services.AddSwaggerGen(options =>
             {
-                Description = "API Key needed to access the endpoints. X-API-KEY: {key}",
-                In = ParameterLocation.Header,
-                Name = "X-API-KEY",
-                Type = SecuritySchemeType.ApiKey
-            });
-
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
+                options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "ApiKey"
+                    Description = "API Key needed to access the endpoints. X-API-KEY: {key}",
+                    In = ParameterLocation.Header,
+                    Name = "X-API-KEY",
+                    Type = SecuritySchemeType.ApiKey
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "ApiKey"
+                        }
+                    },
+                    Array.Empty<string>()
                 }
-            },
-            Array.Empty<string>()
+                });
+            });
+            builder.Services.AddSingleton<S3Service>();
+            builder.WebHost.UseUrls("http://0.0.0.0:5000");
+            var app = builder.Build();
+
+            app.UseCors();
+            app.MapHub<TicketHub>("/ticketHub");
+
+            using var uow = MyXPO.GetNewUnitOfWork();
+            EmptyDataDB.SendData(uow);
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
+            //    app.UseHttpsRedirection();
+            app.UseMiddleware<ApiKeyMiddleware>();
+            app.UseAuthorization();
+            app.MapControllers();
+            app.Run();
+        }catch (Exception ex)
+        {
+            Console.WriteLine($"DI Error: {ex.InnerException?.Message ?? ex.Message}");
+            throw;
         }
-    });
-        });
-        builder.Services.AddSingleton<S3Service>();
-     //   builder.WebHost.UseUrls("http://0.0.0.0:5000");
-        var app = builder.Build();
-
-        app.UseCors();
-        app.MapHub<TicketHub>("/ticketHub");
-
-        using var uow = MyXPO.GetNewUnitOfWork();
-        EmptyDataDB.SendData(uow);
-        app.UseSwagger();
-        app.UseSwaggerUI();
-
-        app.UseHttpsRedirection();
-        app.UseMiddleware<ApiKeyMiddleware>();
-        app.UseAuthorization();
-        app.MapControllers();
-        app.Run();
+        finally
+        {
+            LogManager.Shutdown();
+        }
     }
 }

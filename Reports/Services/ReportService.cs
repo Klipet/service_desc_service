@@ -23,11 +23,9 @@ public class ReportService : IReportService
             FilterPriority = request.FilterPriority ?? 0,
             FilterAuthor = request.FilterAuthorId ?? 0,
             FilterUser = request.FilterUserId ?? 0,
+            FilterCompany = request.FilterCompanyId ?? 0,
+            DateGrouping = Enum.TryParse<DateGroupingLevel>(request.DateGrouping, true, out var dgl) ? dgl : DateGroupingLevel.Month,
         };
-
-        
-
-
 
 
         var internal_ = new ReportQueryBuilder(_uow).Build(config);
@@ -44,10 +42,15 @@ public class ReportService : IReportService
                 Count = r.Count,
                 AuthorOid = r.AuthorOid,
                 AuthorName = r.AuthorName,
+                FilterStatus = r.State,
                 UserOid = r.UserOid,
                 UserName = r.UserName,
+                CompanyId = r.CompanyId,
+                CompanyName = r.CompanyName,
                 ClosedCount = r.ClosedCount,
-                AvgResolutionHours = r.AvgResolutionHours
+                AvgResolutionHours = r.AvgResolutionHours,
+                OverdueCount = r.OverdueCount,
+                
             }).ToList()
         };
 

@@ -3,32 +3,32 @@
 
 public class Tiket : XPObject
 {
-        public Tiket(Session session) : base(session) { }
-        private int _id;
-        private string _title;
-        private string _description;
-        private Company _company;
-        private Category _category;
-        private SubCategory _subCategory;
-        private State _state;
-        private TiketType _typeTiket;
-        private Author _author;
-        private Platform _platform;
-        private WorkSpace _workSpace;
-        private Preority _preority;
-        private string _phone;
-        private bool _resaultPhone;
-        private DateTime _dataPhone;
-        private DateTime _dateSecondPhone;
-        private bool _bugTransfer;
-        private string _bugNumber;
-        private Mode _mode;
-        private DateTime _dataCreated;
-        private DateTime _dataModefire;
-        private User _user;
-        private DateTime? _dueDate;
-        private string _email;
-        private string _messageId;
+    public Tiket(Session session) : base(session) { }
+    private int _id;
+    private string _title;
+    private string _description;
+    private Company _company;
+    private Category _category;
+    private SubCategory _subCategory;
+    private State _state;
+    private TiketType _typeTiket;
+    private Author _author;
+    private Platform _platform;
+    private WorkSpace _workSpace;
+    private Preority _preority;
+    private string _phone;
+    private bool _resaultPhone;
+    private DateTime _dataPhone;
+    private DateTime _dateSecondPhone;
+    private bool _bugTransfer;
+    private string _bugNumber;
+    private Mode _mode;
+    private DateTime _dataCreated;
+    private DateTime _dataModefire;
+    private User _user;
+    private DateTime? _dueDate;
+    private string _email;
+    private string _messageId;
 
     [Association("Tiket-TiketFiles")]
     public XPCollection<TiketFile> Files => GetCollection<TiketFile>(nameof(Files));
@@ -45,134 +45,134 @@ public class Tiket : XPObject
         get { return GetCollection<TiketSolution>(nameof(Solutions)); }
     }
     public string Title
-        {
-            get => _title;
-            set => SetPropertyValue(nameof(Title),ref _title, value);
-        }
-        [Size(SizeAttribute.Unlimited)]
-        public string Description
-        {
-            get => _description;
-            set => SetPropertyValue(nameof(Description), ref _description, value);
-        }
+    {
+        get => _title;
+        set => SetPropertyValue(nameof(Title), ref _title, value);
+    }
+    [Size(SizeAttribute.Unlimited)]
+    public string Description
+    {
+        get => _description;
+        set => SetPropertyValue(nameof(Description), ref _description, value);
+    }
     [Association("Company-Tikets")]
     public Company Company
-        {
-            get => _company;
-            set => SetPropertyValue(nameof(Company), ref _company, value);
-        }
+    {
+        get => _company;
+        set => SetPropertyValue(nameof(Company), ref _company, value);
+    }
     [Association("Category-Tikets")]
     public Category Category
-        {
-            get => _category;
-            set => SetPropertyValue(nameof(Category), ref _category, value);
-        }
+    {
+        get => _category;
+        set => SetPropertyValue(nameof(Category), ref _category, value);
+    }
     [Association("SubCategory-Tikets")]
     public SubCategory SubCategory
-        {
-            get => _subCategory;
-            set => SetPropertyValue(nameof(SubCategory), ref _subCategory, value);
-        }
+    {
+        get => _subCategory;
+        set => SetPropertyValue(nameof(SubCategory), ref _subCategory, value);
+    }
     [Association("State-Tikets")]
     public State State
-        {
-            get => _state;
-            set => SetPropertyValue(nameof(State), ref _state, value);
-        }
+    {
+        get => _state;
+        set => SetPropertyValue(nameof(State), ref _state, value);
+    }
     [Association("TiketType-Tikets")]
     public TiketType TypeTiket
-        {
-            get => _typeTiket;
-            set => SetPropertyValue(nameof(TypeTiket), ref _typeTiket, value);
-        }
+    {
+        get => _typeTiket;
+        set => SetPropertyValue(nameof(TypeTiket), ref _typeTiket, value);
+    }
     [Association("Author-Tikets")]
     public Author Author
-        {
-            get => _author;
-            set => SetPropertyValue(nameof(Author), ref _author, value);
-        }
+    {
+        get => _author;
+        set => SetPropertyValue(nameof(Author), ref _author, value);
+    }
     [Association("Platform-Tikets")]
     public Platform Platform
-        {
-            get => _platform;
-            set => SetPropertyValue(nameof(Platform), ref _platform, value);
-        }
-        [Association("WorkSpace-Tikets")]
-        public WorkSpace WorkSpace
-        {
-            get => _workSpace;
-            set => SetPropertyValue(nameof(WorkSpace), ref _workSpace, value);
-        }
+    {
+        get => _platform;
+        set => SetPropertyValue(nameof(Platform), ref _platform, value);
+    }
+    [Association("WorkSpace-Tikets")]
+    public WorkSpace WorkSpace
+    {
+        get => _workSpace;
+        set => SetPropertyValue(nameof(WorkSpace), ref _workSpace, value);
+    }
 
-        [Association("User-Tikets")]
-        public User User
-        {
-            get => _user;
-            set => SetPropertyValue(nameof(User), ref _user, value);
-        }
+    [Association("User-Tikets")]
+    public User User
+    {
+        get => _user;
+        set => SetPropertyValue(nameof(User), ref _user, value);
+    }
     [Association("Preority-Tikets")]
     public Preority Preorety
     {
         get => _preority;
-        set 
+        set
         {
-         SetPropertyValue(nameof(Preorety), ref _preority, value);
+            SetPropertyValue(nameof(Preorety), ref _preority, value);
 
             // При выборе приоритета — автоматически считаем DueDate
             if (_preority != null)
             {
                 var calculator = new DeadlineCalculator(Session);
-                DueDate = calculator.Calculate( _preority.DeadlineHours);
-            } 
+                DueDate = calculator.Calculate(_preority.DeadlineHours);
+            }
         }
-        
+
     }
-        public string Phone
-        {
-            get => _phone;
-            set => SetPropertyValue(nameof(Phone), ref _phone, value);
-        }
-        public bool ResaultPhone
-        {
-            get => _resaultPhone;
-            set => SetPropertyValue(nameof(ResaultPhone), ref _resaultPhone, value);
-        }
-        public DateTime DataPhone
-        {
-            get => _dataPhone;
-            set => SetPropertyValue(nameof(DataPhone), ref _dataPhone, value);
-        }
+    public string Phone
+    {
+        get => _phone;
+        set => SetPropertyValue(nameof(Phone), ref _phone, value);
+    }
+    public bool ResaultPhone
+    {
+        get => _resaultPhone;
+        set => SetPropertyValue(nameof(ResaultPhone), ref _resaultPhone, value);
+    }
+    public DateTime DataPhone
+    {
+        get => _dataPhone;
+        set => SetPropertyValue(nameof(DataPhone), ref _dataPhone, value);
+    }
     public DateTime DataModefire
     {
         get => _dataModefire;
         set => SetPropertyValue(nameof(DataPhone), ref _dataModefire, value);
     }
     public DateTime DateSecondPhone
-        {
-            get => _dateSecondPhone;
-            set => SetPropertyValue(nameof(DateSecondPhone), ref _dateSecondPhone, value);
-        }
-        public bool BugTransfer
-        {
-            get => _bugTransfer;
-            set => SetPropertyValue(nameof(BugTransfer), ref _bugTransfer, value);
-        }
-        public String BugNumber
-        {
-            get => _bugNumber;
-            set => SetPropertyValue(nameof(BugNumber), ref _bugNumber, value);
-        }
+    {
+        get => _dateSecondPhone;
+        set => SetPropertyValue(nameof(DateSecondPhone), ref _dateSecondPhone, value);
+    }
+    public bool BugTransfer
+    {
+        get => _bugTransfer;
+        set => SetPropertyValue(nameof(BugTransfer), ref _bugTransfer, value);
+    }
+    public String BugNumber
+    {
+        get => _bugNumber;
+        set => SetPropertyValue(nameof(BugNumber), ref _bugNumber, value);
+    }
     [Association("Mode-Tikets")]
     public Mode Mode
-        {
-            get => _mode;
-            set => SetPropertyValue(nameof(Mode), ref _mode, value);
-        }
-        public DateTime DataCreted
-        {
-            get => _dataCreated;
-            set => SetPropertyValue(nameof(DataCreted), ref _dataCreated, value);
-        }
+    {
+        get => _mode;
+        set => SetPropertyValue(nameof(Mode), ref _mode, value);
+    }
+    public DateTime DataCreted
+    {
+        get => _dataCreated;
+        set => SetPropertyValue(nameof(DataCreted), ref _dataCreated, value);
+    }
     public DateTime? DueDate
     {
         get => _dueDate;

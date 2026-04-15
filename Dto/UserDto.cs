@@ -7,6 +7,7 @@
     public string Password { get; set; }
     public string Phone { get; set; }
     public string Loghin { get; set; }
+    public bool IsActive { get; set; }
     public DateTime DateCreated { get; set; }
     //workSpace
     public int WorkSpaceId { get; set; }
@@ -21,6 +22,7 @@ public class UserResponseDto
     public string Email { get; set; }
 
     public string Loghin { get; set; }
+    public bool IsActive { get; set; }
     public string Phone { get; set; }
     public string WorkSpaceName { get; set; }
     public int WorkSpaceId { get; set; }

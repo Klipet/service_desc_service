@@ -7,8 +7,12 @@
     public int? AuthorOid { get; set; }
     public string AuthorName { get; set; }
     public int? UserOid { get; set; }
+    public int OverdueCount { get; set; }
+    public string CompanyName { get; set; }
+    public int? CompanyId { get; set; }
     public string UserName { get; set; }
     public object GroupKey { get; set; }
+    public string State {  get; set; }
 }
 
 public class ReportResult

@@ -46,9 +46,8 @@ public class UserController: ControllerBase
                 DateCreated = u.DateCreated,
                 WorkSpaceName = u.WorkSpace.Name,
                 WorkSpaceId = u.WorkSpace.Oid,
-                ApiKey = u.ApiKey
-                
-
+                ApiKey = u.ApiKey,
+                IsActive = u.IsActive
             }).ToList();
             return Ok(resault);
         }
@@ -99,6 +98,7 @@ public class UserController: ControllerBase
             Phone = user.Phone,
             WorkSpaceName = user.WorkSpace.Name,
             DateCreated = DateTime.UtcNow,
+            IsActive = user.IsActive,
            
         };
 
@@ -127,6 +127,7 @@ public class UserController: ControllerBase
             user.PasswordHash = userModel.Password;
             user.Loghin = userModel.Loghin;
             user.WorkSpace = wp;
+            user.IsActive = userModel.IsActive;
             _uow.CommitChanges();
             return Ok($"User {id}, {user.Name} is update");
         }
@@ -163,7 +164,8 @@ public class UserController: ControllerBase
                 Loghin = user.Loghin,
                 WorkSpaceName = wp.Name,
                 DateCreated = user.DateCreated,
-                ApiKey = user.ApiKey
+                ApiKey = user.ApiKey,
+                IsActive = user.IsActive,
 
             };
             return Ok(responseUser);
@@ -184,6 +186,8 @@ public class UserController: ControllerBase
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(reqest.Password, user.PasswordHash))
             return Unauthorized("Invalid credentials");
+        if(user.IsActive == false)
+            return Unauthorized("User is dezactivate");
 
         try
         {

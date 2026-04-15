@@ -151,16 +151,23 @@ public class MyXPO
     }
 
     // Method to update the database
-    public static void UpdateDataBase(XPDictionary dict = null)
+    public static void UpdateDataBase()
     {
-        var dataStore = CreateDataStore(ConnectionString?.Replace("XpoDataStorePool=True;", ""), AutoCreateOption.DatabaseAndSchema);
-        var dataLayer = CreateDataLayer(dataStore, AutoCreateOption.DatabaseAndSchema, dict);
+        var dict = new ReflectionDictionary();
 
-        using (var session = new DevExpress.Xpo.Session(dataLayer))
+        // регистрируем все классы XPO
+        dict.GetDataStoreSchema(typeof(Program).Assembly);
+
+        var dataStore = CreateDataStore(
+            ConnectionString?.Replace("XpoDataStorePool=True;", ""),
+            AutoCreateOption.DatabaseAndSchema
+        );
+
+        var dataLayer = new SimpleDataLayer(dict, dataStore);
+
+        using (var session = new Session(dataLayer))
         {
-            session.Connect();
-            session.UpdateSchema();
-
+            session.UpdateSchema(dict.CollectClassInfos(typeof(Program).Assembly));
         }
 
         dataLayer.Dispose();

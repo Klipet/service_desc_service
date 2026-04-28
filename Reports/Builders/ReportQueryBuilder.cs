@@ -38,10 +38,7 @@ public class ReportQueryBuilder
         if (config.DateFrom.HasValue)
             query = query.Where(t => t.DataCreted >= config.DateFrom.Value);
         if (config.DateTo.HasValue)
-        {
-            var endDate = config.DateTo.Value.Date.AddDays(1);
-            query = query.Where(t => t.DataCreted < endDate);
-        }
+            query = query.Where(t => t.DataCreted <= config.DateTo.Value.Date.AddDays(1).AddTicks(-1));
         if (config.FilterStatus != 0)
             query = query.Where(t => t.State != null && t.State.Oid == config.FilterStatus);
         if (config.FilterCategory != 0)
@@ -64,7 +61,7 @@ public class ReportQueryBuilder
         Expression<Func<Tiket, string>> keySelector)
     {
         var rows = query
-            .AsEnumerable()
+           .AsEnumerable()
         .GroupBy(keySelector.Compile())
         .Select(g => new ReportRow
         {
@@ -76,6 +73,13 @@ public class ReportQueryBuilder
                 .Select(t => (t.DueDate!.Value - t.DataCreted).TotalHours)
                 .DefaultIfEmpty(0)
                 .Average(),
+            AuthorOid = g.FirstOrDefault()?.Author?.Oid,
+            AuthorName = g.FirstOrDefault()?.Author?.Name,
+            UserOid = g.FirstOrDefault()?.User?.Oid,
+            UserName = g.FirstOrDefault()?.User?.Name,
+            State = g.FirstOrDefault()?.State?.Name,
+            CompanyName = g.FirstOrDefault()?.Company?.Name,
+            CompanyId = g.FirstOrDefault()?.Company?.Oid,
             OverdueCount = g.Count(t => IsOverdue(t)),
         })
         .ToDictionary(r => r.Label);
@@ -104,7 +108,7 @@ public class ReportQueryBuilder
     {
         var level = config.DateGrouping; // уровень группировки из конфига
 
-        // Фильтруем по сезону на уровне БД, если выбран конкретный сезон
+    /*    // Фильтруем по сезону на уровне БД, если выбран конкретный сезон
         if (level == DateGroupingLevel.Spring || level == DateGroupingLevel.Summer ||
             level == DateGroupingLevel.Autumn || level == DateGroupingLevel.Winter)
         {
@@ -126,7 +130,7 @@ public class ReportQueryBuilder
                 (seasonRu == "Зима" && (t.DataCreted.Month == 12 || t.DataCreted.Month <= 2))
             );
         }
-
+    */
         var grouped = query
             .AsEnumerable() // материализуем отфильтрованные данные
             .GroupBy(t => GetDateGroupKey(t.DataCreted, level))

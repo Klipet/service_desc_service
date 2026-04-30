@@ -1,6 +1,7 @@
 ﻿using DevExpress.Xpo;
 using MimeKit;
 using System.Net.Mail;
+using static DevExpress.Xpo.Helpers.AssociatedCollectionCriteriaHelper;
 
 public class TiketFromEmail
 {
@@ -12,7 +13,7 @@ public class TiketFromEmail
     }
 
 
-    public Tiket CreateTiketFromEmail( MimeMessage email)
+    public TiketEmailServiceDto CreateTiketFromEmail(MimeMessage email)
     {
         using var uow = MyXPO.GetNewUnitOfWork();
         Author? autor = null;
@@ -22,10 +23,10 @@ public class TiketFromEmail
         Mode? existMode = null;
 
         string? emailAddress = email.From.Mailboxes.FirstOrDefault()?.Address;
-        if(emailAddress != null || emailAddress != "")
+        if (emailAddress != null || emailAddress != "")
         {
             existMode = uow.Query<Mode>().FirstOrDefault(m => m.Oid == 1);
-           
+
         }
 
         autor = uow.Query<Author>().FirstOrDefault(a => a.Email == emailAddress);
@@ -68,8 +69,8 @@ public class TiketFromEmail
 
         if (!string.IsNullOrEmpty(email.InReplyTo))
         {
-            
-            
+
+
             existingTicket = uow.Query<TiketComment>().FirstOrDefault(m => m.EmailMessageId == email.InReplyTo)?.Tiket;
             Console.WriteLine($"Проверка InReplyTo : {existingTicket}");
 
@@ -82,7 +83,7 @@ public class TiketFromEmail
 
                     if (message != null)
                     {
-                   
+
                         existingTicket = message;
                         Console.WriteLine($"Проверка reference: {existingTicket}");
                         break;
@@ -91,7 +92,7 @@ public class TiketFromEmail
             }
 
         }
-        
+
         if (existingTicket != null)
         {
             var rawText = email.TextBody ?? email.HtmlBody ?? "";
@@ -102,16 +103,31 @@ public class TiketFromEmail
             {
                 Tiket = existingTicket,
                 MessageText = cleanText,
-            //    email.TextBody ?? email.HtmlBody ?? "",
+                //    email.TextBody ?? email.HtmlBody ?? "",
                 CreatedAt = DateTime.Now,
                 Author = autor,
                 EmailMessageId = email.MessageId
             };
-           
+
             uow.Save(message);
             uow.CommitChanges();
             Console.WriteLine($"Создан Comment: {message.Oid}");
-            return existingTicket;
+            var comment = new TiketCommentDto
+            {
+                Id = message.Oid,
+                Tiket = existingTicket.Oid,
+                Author = autor.Oid,
+                MailMessageId = email.MessageId,
+                CreatedAt = message.CreatedAt,
+                MessageText = message.MessageText ?? ""
+            };
+
+
+            return new TiketEmailServiceDto
+            {
+                IsNewTicket = false,
+                Comment = comment
+            }; ;
         }
         var tiket = new Tiket(uow)
         {
@@ -129,7 +145,7 @@ public class TiketFromEmail
             DueDate = DateTime.Now.AddHours(2),
         };
 
-      
+
 
 
 
@@ -169,11 +185,92 @@ public class TiketFromEmail
 
         }
 
-        
+
 
         uow.CommitChanges();
 
-        return tiket;
+        return new TiketEmailServiceDto
+        {
+            IsNewTicket = true,
+            Ticket = new TiketResponseDto
+            {
+                Id = tiket.Oid,
+                Title = tiket.Title ?? string.Empty,
+                Description = tiket.Description ?? string.Empty,
+
+                AuthorId = tiket.Author != null ? tiket.Author.Oid : 0,
+                AuthorName = tiket.Author != null ? tiket.Author.Name : string.Empty,
+
+                CategoryName = tiket.Category != null ? tiket.Category.Name : string.Empty,
+
+                Phone = tiket.Phone ?? string.Empty,
+
+                CompanyId = tiket.Company != null ? tiket.Company.Oid : 0,
+                CompanyName = tiket.Company != null ? tiket.Company.Name : string.Empty,
+
+                SubCategoryName = tiket.SubCategory != null ? tiket.SubCategory.Name : string.Empty,
+
+                StateName = tiket.State != null ? tiket.State.Name : string.Empty,
+                StateId = tiket.State != null ? tiket.State.Oid : 0,
+
+                TypeTiketName = tiket.TypeTiket != null ? tiket.TypeTiket.Name : string.Empty,
+
+                PlatformId = tiket.Platform != null ? tiket.Platform.Oid : 0,
+                PlatformName = tiket.Platform != null ? tiket.Platform.Name : string.Empty,
+
+                WorkSpaceName = tiket.WorkSpace != null ? tiket.WorkSpace.Name : string.Empty,
+
+                UserId = tiket.User != null ? tiket.User.Oid : 0,
+                UserName = tiket.User != null ? tiket.User.Name : string.Empty,
+
+                PreorityName = tiket.Preorety != null ? tiket.Preorety.Name : string.Empty,
+
+                DataPhone = tiket.DataPhone,
+                ResaultPhone = tiket.ResaultPhone,
+                DateSecondPhone = tiket.DateSecondPhone,
+                BugNumber = tiket.BugNumber ?? string.Empty,
+                BugTransfer = tiket.BugTransfer,
+                ModeName = tiket.Mode != null ? tiket.Mode.Name : string.Empty,
+                DataCreted = tiket.DataCreted,
+                DataModefire = tiket.DataModefire,
+                DueDate = tiket.DueDate ?? DateTime.UtcNow,
+
+                // 📎 Файлы тикета
+                Files = tiket.Files.Select(f => new TiketFileDto
+                {
+                    Id = f.Oid,
+                    FileName = f.FileName,
+                    FileUrl = f.FileUrl,
+                    IsResponse = f.IsResponse
+                }).ToList(),
+
+                // 💬 Решения
+                Solution = tiket.Solutions.Select(s => new TiketSolutionDto
+                {
+                    Id = s.Oid,
+                    Author = s.Author != null ? s.Author.Oid : 0,
+                    User = s.User != null ? s.User.Oid : 0,
+                    MessageText = s.MessageText ?? string.Empty,
+                    CreatedAt = s.CreatedAt,
+
+                    // если EmailList хранится строкой через ;
+                    EmailList = string.IsNullOrEmpty(s.EmailList)
+                        ? new List<string> { s.Author.Email }
+                        : s.EmailListParsed
+                }).ToList(),
+
+                Comment = tiket.Messages.Select(m => new TiketCommentDto
+                {
+                    Id = m.Oid,
+                    Tiket = m.Tiket.Oid,
+                    Author = m.Author != null ? m.Author.Oid : 0,
+                    MailMessageId = m.EmailMessageId,
+                    CreatedAt = m.CreatedAt,
+                    MessageText = m.MessageText ?? string.Empty,
+                }).ToList(),
+            }
+        };
+    
     }
 
     public string ExtractNewMessage(string body)

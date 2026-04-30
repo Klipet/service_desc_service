@@ -36,7 +36,7 @@ public class TiketController : ControllerBase
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
-            var result = _uow.Query<Tiket>()
+            var result = _uow.Query<Tiket>().OrderBy(order => order.Oid)
                 .Select(t => new TiketResponseDto
                 {
                     Id = t.Oid,
@@ -102,7 +102,18 @@ public class TiketController : ControllerBase
                         EmailList = string.IsNullOrEmpty(s.EmailList)
                             ? new List<string> { s.Author.Email }
                             : s.EmailListParsed
-                    }).ToList()
+                    }).ToList(),
+
+                    Comment = t.Messages.Select(m => new TiketCommentDto
+                    {
+                        Id = m.Oid,
+                        Tiket = m.Tiket.Oid,
+                        Author = m.Author != null ? m.Author.Oid : 0,
+                        MailMessageId = m.EmailMessageId,
+                        CreatedAt = m.CreatedAt,
+                        MessageText = m.MessageText ?? string.Empty,
+                    }).ToList(),
+
                 }).ToList();
 
             Console.WriteLine($"Найдено тикетов: {result.Count}");
@@ -303,8 +314,17 @@ public class TiketController : ControllerBase
                 EmailList = string.IsNullOrEmpty(s.EmailList)
                     ? new List<string> { s.Author.Email }
                     : s.EmailListParsed
-            }).ToList()
+            }).ToList(),
 
+             Comment = t.Messages.Select(m => new TiketCommentDto
+             {
+                 Id = m.Oid,
+                 Tiket = m.Tiket.Oid,
+                 Author = m.Author != null ? m.Author.Oid : 0,
+                 MailMessageId = m.EmailMessageId,
+                 CreatedAt = m.CreatedAt,
+                 MessageText = m.MessageText ?? string.Empty,
+             }).ToList(),
         };
                  
         return Ok(tiketDto);
@@ -494,7 +514,17 @@ public class TiketController : ControllerBase
                         EmailList = string.IsNullOrEmpty(s.EmailList)
                             ? new List<string> { s.Author.Email }
                             : s.EmailListParsed
-                    }).ToList()
+                    }).ToList(),
+
+                    Comment = t.Messages.Select(m => new TiketCommentDto
+                    {
+                        Id = m.Oid,
+                        Tiket = m.Tiket.Oid,
+                        Author = m.Author != null ? m.Author.Oid : 0,
+                        MailMessageId = m.EmailMessageId,
+                        CreatedAt = m.CreatedAt,
+                        MessageText = m.MessageText ?? string.Empty,
+                    }).ToList(),
                 }).ToList();
             return Ok(new
             {
@@ -511,6 +541,13 @@ public class TiketController : ControllerBase
         }
     }
 
+
+    [HttpGet("PostFilter")]
+    public IActionResult PostFilterFind([FromBody] TiketPostDto model)
+    {
+        if (model == null) return BadRequest("Data is null");
+
+    }
 
 
     private T GetOrFail<T>(UnitOfWork uow, int id, string entityName) where T : XPObject

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using static DevExpress.Xpo.Helpers.AssociatedCollectionCriteriaHelper;
 
-public class EmailBackgroundService: BackgroundService
+public class EmailBackgroundService : BackgroundService
 {
     private readonly ILogger<EmailBackgroundService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
@@ -38,37 +39,67 @@ public class EmailBackgroundService: BackgroundService
                     {
                         var tiсket = tiketFromEmail.CreateTiketFromEmail(email);
 
-                        await _hub.Clients.All.SendAsync("NewTicketCreated", new
+
+                        if (tiсket.IsNewTicket)
                         {
-                            Id = tiсket.Oid,
-                            Title = tiсket.Title,
-                            Description = tiсket.Description,
-                            AuthorName = tiсket.Author?.Name ?? "",
-                            AuthorId = tiсket.Author?.Oid ?? 0,
-                            CategoryName = "",
-                            Phone = "",
-                            CompanyName = tiсket.Company.Name,
-                            CompanyId = tiсket.Company.Oid,
-                            SubCategoryName = "",
-                            StateName = "",
-                            TypeTiketName = "",
-                            PlatformName = tiсket.Platform.Name,
-                            PlatformId = tiсket.Platform.Oid,
-                            WorkSpaceName = "",
-                            UserName = "",
-                            UserId = 0,
-                            PreorityName = "",
-                            DataPhone = DateTime.Now,
-                            ResaultPhone = false,
-                            DateSecondPhone = DateTime.Now,
-                            BugNumber = "",
-                            BugTransfer = false,
-                            ModeId = 0,
-                            ModeName = "",
-                            DataCreted = DateTime.Now,
-                            DueDate = tiсket.DueDate ?? DateTime.UtcNow,
-                        });
-                    }catch(Exception ex)
+                            _logger.LogInformation($"отправляю Ticket : {tiсket.Ticket.Id}");
+                            await _hub.Clients.All.SendAsync("NewTicketCreated", tiсket.Ticket);
+
+                        }
+                        else
+                        {
+                            _logger.LogInformation($"отправляю Comment : {tiсket.Comment.Id}");
+                            await _hub.Clients.All.SendAsync("NewComment", tiсket.Comment);
+                        }
+                        //var commentDto = new TiketCommentDto
+                        //{
+                        //    Id = lastMessage.Oid,
+                        //    Tiket = tiсket.Oid,
+                        //    Author = lastMessage.Author?.Oid ?? 0,
+                        //    MailMessageId = lastMessage.EmailMessageId,
+                        //    CreatedAt = lastMessage.CreatedAt,
+                        //    MessageText = lastMessage.MessageText ?? string.Empty,
+                        //};
+
+                        //if(!string.IsNullOrEmpty(email.InReplyTo))
+                        //{
+                        //   await _hub.Clients.All.SendAsync("NewComment", commentDto);
+                        //}
+                        //else
+                        //{
+                        //    await _hub.Clients.All.SendAsync("NewTicketCreated", new
+                        //    {
+                        //        Id = tiсket.Oid,
+                        //        Title = tiсket.Title,
+                        //        Description = tiсket.Description,
+                        //        AuthorName = tiсket.Author?.Name ?? "",
+                        //        AuthorId = tiсket.Author?.Oid ?? 0,
+                        //        CategoryName = "",
+                        //        Phone = "",
+                        //        CompanyName = tiсket.Company.Name,
+                        //        CompanyId = tiсket.Company.Oid,
+                        //        SubCategoryName = "",
+                        //        StateName = "",
+                        //        TypeTiketName = "",
+                        //        PlatformName = tiсket.Platform.Name,
+                        //        PlatformId = tiсket.Platform.Oid,
+                        //        WorkSpaceName = "",
+                        //        UserName = "",
+                        //        UserId = 0,
+                        //        PreorityName = "",
+                        //        DataPhone = DateTime.Now,
+                        //        ResaultPhone = false,
+                        //        DateSecondPhone = DateTime.Now,
+                        //        BugNumber = "",
+                        //        BugTransfer = false,
+                        //        ModeId = 0,
+                        //        ModeName = "",
+                        //        DataCreted = DateTime.Now,
+                        //        DueDate = tiсket.DueDate ?? DateTime.UtcNow,
+                        //    });
+                        //}
+                    }
+                    catch (Exception ex)
                     {
                         _logger.LogError(ex, "Ошибка при обработке письма: {Subject}", email.Subject);
                     }

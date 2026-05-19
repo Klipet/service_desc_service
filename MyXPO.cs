@@ -155,11 +155,10 @@ public class MyXPO
     {
         var dict = new ReflectionDictionary();
 
-        // регистрируем все классы XPO
-        dict.GetDataStoreSchema(typeof(Program).Assembly);
-
+        dict.GetDataStoreSchema(typeof(EmptyDataDB).Assembly);
+        var connectionString = ConnectionString?.Replace("XpoDataStorePool=True;", "");
         var dataStore = CreateDataStore(
-            ConnectionString?.Replace("XpoDataStorePool=True;", ""),
+            connectionString,
             AutoCreateOption.DatabaseAndSchema
         );
 
@@ -167,7 +166,7 @@ public class MyXPO
 
         using (var session = new Session(dataLayer))
         {
-            session.UpdateSchema(dict.CollectClassInfos(typeof(Program).Assembly));
+            session.UpdateSchema();
         }
 
         dataLayer.Dispose();

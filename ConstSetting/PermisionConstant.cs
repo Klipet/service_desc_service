@@ -4,6 +4,8 @@
     public const string TicketCreate = "ticket.create";
     public const string TicketUpdate = "ticket.update";
     public const string TicketDelete = "ticket.delete";
+    public const string TicketAttach = "ticket.attach";
+    public const string TicketAssign = "ticket.assign";
 
     // Пользователи (Users)
     public const string UserRead = "user.read";

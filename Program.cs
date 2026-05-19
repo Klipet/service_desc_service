@@ -9,7 +9,6 @@ public class Program
    
     public static void Main(string[] args)
     {
-    //    var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
         try
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -18,11 +17,11 @@ public class Program
 
 
             var core = new Core(builder.Configuration);
-            if (!core.InitializeConnection())
-            {
-                Console.WriteLine("[FATAL] Cannot start application: database connection failed.");
-                return;
-            }
+        //    if (!core.InitializeConnection())
+        //    {
+        //        Console.WriteLine("[FATAL] Cannot start application: database connection failed.");
+        //        return;
+         //   }
             core.InitializeConnection();
 
             builder.Services.AddScoped(provider => MyXPO.GetNewUnitOfWork());

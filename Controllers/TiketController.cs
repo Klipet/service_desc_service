@@ -1,6 +1,7 @@
 ﻿
 using DevExpress.Data.Filtering;
 using DevExpress.Xpo;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -15,7 +16,7 @@ public class TiketController : ControllerBase
 {
     private readonly IHubContext<TicketHub> _hub;
     private readonly UnitOfWork _uow;
-    public TiketController(UnitOfWork uow, IHubContext<TicketHub> hub   )
+    public TiketController(UnitOfWork uow, IHubContext<TicketHub> hub)
     {
         _uow = uow;
         _hub = hub;
@@ -36,88 +37,11 @@ public class TiketController : ControllerBase
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
-            var result = _uow.Query<Tiket>().OrderBy(order => order.Oid)
-                .Select(t => new TiketResponseDto
-                {
-                    Id = t.Oid,
-                    Title = t.Title ?? string.Empty,
-                    Description = t.Description ?? string.Empty,
-
-                    AuthorId = t.Author != null ? t.Author.Oid : 0,
-                    AuthorName = t.Author != null ? t.Author.Name : string.Empty,
-
-                    CategoryName = t.Category != null ? t.Category.Name : string.Empty,
-
-                    Phone = t.Phone ?? string.Empty,
-
-                    CompanyId = t.Company != null ? t.Company.Oid : 0,
-                    CompanyName = t.Company != null ? t.Company.Name : string.Empty,
-
-                    SubCategoryName = t.SubCategory != null ? t.SubCategory.Name : string.Empty,
-
-                    StateName = t.State != null ? t.State.Name : string.Empty,
-                    StateId = t.State != null ? t.State.Oid : 0,
-
-                    TypeTiketName = t.TypeTiket != null ? t.TypeTiket.Name : string.Empty,
-
-                    PlatformId = t.Platform != null ? t.Platform.Oid : 0,
-                    PlatformName = t.Platform != null ? t.Platform.Name : string.Empty,
-
-                    WorkSpaceName = t.WorkSpace != null ? t.WorkSpace.Name : string.Empty,
-
-                    UserId = t.User != null ? t.User.Oid : 0,
-                    UserName = t.User != null ? t.User.Name : string.Empty,
-
-                    PreorityName = t.Preorety != null ? t.Preorety.Name : string.Empty,
-
-                    DataPhone = t.DataPhone,
-                    ResaultPhone = t.ResaultPhone,
-                    DateSecondPhone = t.DateSecondPhone,
-                    BugNumber = t.BugNumber ?? string.Empty,
-                    BugTransfer = t.BugTransfer,
-                    ModeName = t.Mode != null ? t.Mode.Name : string.Empty,
-                    DataCreted = t.DataCreted,
-                    DataModefire = t.DataModefire,
-                    DueDate = t.DueDate ?? DateTime.UtcNow,
-
-                    // 📎 Файлы тикета
-                    Files = t.Files.Select(f => new TiketFileDto
-                    {
-                        Id = f.Oid,
-                        FileName = f.FileName,
-                        FileUrl = f.FileUrl,
-                        IsResponse = f.IsResponse
-                    }).ToList(),
-
-                    // 💬 Решения
-                    Solution = t.Solutions.Select(s => new TiketSolutionDto
-                    {
-                        Id = s.Oid,
-                        Author = s.Author != null ? s.Author.Oid : 0,
-                        User = s.User != null ? s.User.Oid : 0,
-                        MessageText = s.MessageText ?? string.Empty,
-                        CreatedAt = s.CreatedAt,
-
-                        // если EmailList хранится строкой через ;
-                        EmailList = string.IsNullOrEmpty(s.EmailList)
-                            ? new List<string> { s.Author.Email }
-                            : s.EmailListParsed
-                    }).ToList(),
-
-                    Comment = t.Messages.Select(m => new TiketCommentDto
-                    {
-                        Id = m.Oid,
-                        Tiket = m.Tiket.Oid,
-                        Author = m.Author != null ? m.Author.Oid : 0,
-                        MailMessageId = m.EmailMessageId,
-                        CreatedAt = m.CreatedAt,
-                        MessageText = m.MessageText ?? string.Empty,
-                    }).ToList(),
-
-                }).ToList();
-
-            Console.WriteLine($"Найдено тикетов: {result.Count}");
-
+            var result = _uow.Query<Tiket>()
+                .OrderBy(t => t.Oid)
+                .AsEnumerable()       // ✅ переходим в память для ToDto
+                .Select(ToDto)
+                .ToList();
             return Ok(result);
         }
         catch (Exception ex)
@@ -137,7 +61,7 @@ public class TiketController : ControllerBase
         User user;
         if (model.UserId == 0)
         {
-           user = SettingTiket.GetUserRoundRobin(uow, workSpaceId: model.WorkSpaceId);
+            user = SettingTiket.GetUserRoundRobin(uow, workSpaceId: model.WorkSpaceId);
 
             Console.WriteLine($"userId = {user.Oid}");
         }
@@ -146,7 +70,7 @@ public class TiketController : ControllerBase
             user = GetOrFail<User>(uow, model.UserId, "User");
         }
 
-     //   var users = GetOrFail<User>(uow, model.UserId, "User");
+        //   var users = GetOrFail<User>(uow, model.UserId, "User");
         var wp = GetOrFail<WorkSpace>(uow, model.WorkSpaceId, "WorkSpace");
         var st = GetOrFail<State>(uow, model.StateId, "State");
         var tt = GetOrFail<TiketType>(uow, model.TypeTiketId, "TiketType");
@@ -186,10 +110,11 @@ public class TiketController : ControllerBase
         try
         {
             uow.CommitChanges();
-            
+
 
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
         }
         var resault = new TiketResponseDto
@@ -233,103 +158,30 @@ public class TiketController : ControllerBase
     {
         if (!HasPermission(PermisionConstant.TicketRead))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
-
         var t = _uow.GetObjectByKey<Tiket>(id);
-        if(t == null) return NotFound();
-
-/*
-        var user = _uow.GetObjectByKey<User>(tiket.User.Oid) ?? throw new KeyNotFoundException("Пользователь не найден");
-        var wp = _uow.GetObjectByKey<WorkSpace>(tiket.WorkSpace.Oid) ?? throw new KeyNotFoundException("WorkSpace не найден");
-        var st = _uow.GetObjectByKey<State>(tiket.State.Oid) ?? throw new KeyNotFoundException("State не найден");
-        var tt = _uow.GetObjectByKey<TiketType>(tiket.TypeTiket.Oid) ?? throw new KeyNotFoundException("TiketType не найден");
-        var pr = _uow.GetObjectByKey<Preority>(tiket.Preorety.Oid) ?? throw new KeyNotFoundException("Preority не найден");
-        var md = _uow.GetObjectByKey<Mode>(tiket.Mode.Oid) ?? throw new KeyNotFoundException("Mode не найден");
-        var sc = _uow.GetObjectByKey<SubCategory>(tiket.SubCategory.Oid) ?? throw new KeyNotFoundException("SubCategory не найден");
-        var cat = _uow.GetObjectByKey<Category>(tiket.Category.Oid) ?? throw new KeyNotFoundException("Category не найден");
-        var au = _uow.GetObjectByKey<Author>(tiket.Author.Oid) ?? throw new KeyNotFoundException("Author не найден");
-        var pl = _uow.GetObjectByKey<Platform>(tiket.Platform.Oid) ?? throw new KeyNotFoundException("Platform не найден");
-        var com = _uow.GetObjectByKey<Company>(tiket.Company.Oid) ?? throw new KeyNotFoundException("Company не найден");
-*/
-        var tiketDto = new TiketResponseDto
-        {
-            Id = t.Oid,
-            Title = t.Title ?? string.Empty,
-            Description = t.Description ?? string.Empty,
-
-            AuthorId = t.Author != null ? t.Author.Oid : 0,
-            AuthorName = t.Author != null ? t.Author.Name : string.Empty,
-
-            CategoryName = t.Category != null ? t.Category.Name : string.Empty,
-
-            Phone = t.Phone ?? string.Empty,
-
-            CompanyId = t.Company != null ? t.Company.Oid : 0,
-            CompanyName = t.Company != null ? t.Company.Name : string.Empty,
-
-            SubCategoryName = t.SubCategory != null ? t.SubCategory.Name : string.Empty,
-
-            StateName = t.State != null ? t.State.Name : string.Empty,
-            StateId = t.State != null ? t.State.Oid : 0,
-
-            TypeTiketName = t.TypeTiket != null ? t.TypeTiket.Name : string.Empty,
-
-            PlatformId = t.Platform != null ? t.Platform.Oid : 0,
-            PlatformName = t.Platform != null ? t.Platform.Name : string.Empty,
-
-            WorkSpaceName = t.WorkSpace != null ? t.WorkSpace.Name : string.Empty,
-
-            UserId = t.User != null ? t.User.Oid : 0,
-            UserName = t.User != null ? t.User.Name : string.Empty,
-
-            PreorityName = t.Preorety != null ? t.Preorety.Name : string.Empty,
-
-            DataPhone = t.DataPhone,
-            ResaultPhone = t.ResaultPhone,
-            DateSecondPhone = t.DateSecondPhone,
-            BugNumber = t.BugNumber ?? string.Empty,
-            BugTransfer = t.BugTransfer,
-            ModeName = t.Mode != null ? t.Mode.Name : string.Empty,
-            DataCreted = t.DataCreted,
-            DataModefire = t.DataModefire,
-            DueDate = t.DueDate ?? DateTime.UtcNow,
-            // 📎 Файлы тикета
-            Files = t.Files.Select(f => new TiketFileDto
-            {
-                Id = f.Oid,
-                FileName = f.FileName,
-                FileUrl = f.FileUrl,
-                IsResponse = f.IsResponse
-            }).ToList(),
-
-            // 💬 Решения
-            Solution = t.Solutions.Select(s => new TiketSolutionDto
-            {
-                Id = s.Oid,
-                Author = s.Author != null ? s.Author.Oid : 0,
-                User = s.User != null ? s.User.Oid : 0,
-                MessageText = s.MessageText ?? string.Empty,
-                CreatedAt = s.CreatedAt,
-
-                // если EmailList хранится строкой через ;
-                EmailList = string.IsNullOrEmpty(s.EmailList)
-                    ? new List<string> { s.Author.Email }
-                    : s.EmailListParsed
-            }).ToList(),
-
-             Comment = t.Messages.Select(m => new TiketCommentDto
-             {
-                 Id = m.Oid,
-                 Tiket = m.Tiket.Oid,
-                 Author = m.Author != null ? m.Author.Oid : 0,
-                 MailMessageId = m.EmailMessageId,
-                 CreatedAt = m.CreatedAt,
-                 MessageText = m.MessageText ?? string.Empty,
-             }).ToList(),
-        };
-                 
-        return Ok(tiketDto);
-
+        if (t == null) return NotFound();
+        return Ok(ToDto(t));
     }
+
+    [HttpGet("GetTicketByUserId")]
+    public IActionResult GetByUserId([FromQuery] int? userId = null)
+    {
+        if (!HasPermission(PermisionConstant.TicketRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+        var query = _uow.Query<Tiket>();
+
+        if (!userId.HasValue)
+            return BadRequest(new { error = "userId is required" });
+
+        var tickets = query
+            .Where(t => t.User.Oid == userId.Value)
+            .OrderByDescending(t => t.DataCreted)
+            .Select(ToDto)
+            .ToList();
+
+        return Ok(tickets);
+    }
+
     [HttpPut("Update")]
     public IActionResult Update([FromQuery] int id, [FromBody] TiketPostDto dto)
     {
@@ -337,7 +189,7 @@ public class TiketController : ControllerBase
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
-            
+
             var tiket = _uow.Query<Tiket>().FirstOrDefault(t => t.Oid == id);
             Console.WriteLine($"Найдено тикетов: {tiket.Oid}");
             if (tiket == null) return NotFound($"Тикет с Id {id} не найден");
@@ -374,7 +226,7 @@ public class TiketController : ControllerBase
             tiket.BugTransfer = dto.BugTransfer;
             tiket.Mode = md;
             tiket.DataCreted = dto.DataCreted;
-           
+
 
             _uow.CommitChanges();
 
@@ -400,7 +252,7 @@ public class TiketController : ControllerBase
             var ticket = _uow.Query<Tiket>()
             .FirstOrDefault(t => t.Oid == id);
 
-     
+
             if (ticket == null)
                 return NotFound($"Тикет с id={id} не найден");
 
@@ -445,87 +297,18 @@ public class TiketController : ControllerBase
             query = query.OrderBy(t => t.Oid);
 
             var totalCount = query.Count();
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
 
             var result = query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(t => new TiketResponseDto
-                {
-                    Id = t.Oid,
-                    Title = t.Title ?? string.Empty,
-                    Description = t.Description ?? string.Empty,
+           .OrderBy(t => t.Oid)
+           .Skip((page - 1) * pageSize)
+           .Take(pageSize)
+           .AsEnumerable()       // ✅ переходим в память для ToDto
+           .Select(ToDto)
+           .ToList();
 
-                    AuthorId = t.Author != null ? t.Author.Oid : 0,
-                    AuthorName = t.Author != null ? t.Author.Name : string.Empty,
-
-                    CategoryName = t.Category != null ? t.Category.Name : string.Empty,
-
-                    Phone = t.Phone ?? string.Empty,
-
-                    CompanyId = t.Company != null ? t.Company.Oid : 0,
-                    CompanyName = t.Company != null ? t.Company.Name : string.Empty,
-
-                    SubCategoryName = t.SubCategory != null ? t.SubCategory.Name : string.Empty,
-
-                    StateName = t.State != null ? t.State.Name : string.Empty,
-                    StateId = t.State != null ? t.State.Oid : 0,
-
-                    TypeTiketName = t.TypeTiket != null ? t.TypeTiket.Name : string.Empty,
-
-                    PlatformId = t.Platform != null ? t.Platform.Oid : 0,
-                    PlatformName = t.Platform != null ? t.Platform.Name : string.Empty,
-
-                    WorkSpaceName = t.WorkSpace != null ? t.WorkSpace.Name : string.Empty,
-
-                    UserId = t.User != null ? t.User.Oid : 0,
-                    UserName = t.User != null ? t.User.Name : string.Empty,
-
-                    PreorityName = t.Preorety != null ? t.Preorety.Name : string.Empty,
-
-                    DataPhone = t.DataPhone,
-                    ResaultPhone = t.ResaultPhone,
-                    DateSecondPhone = t.DateSecondPhone,
-                    BugNumber = t.BugNumber ?? string.Empty,
-                    BugTransfer = t.BugTransfer,
-                    ModeName = t.Mode != null ? t.Mode.Name : string.Empty,
-                    DataCreted = t.DataCreted,
-                    DataModefire = t.DataModefire,
-                    DueDate = t.DueDate ?? DateTime.UtcNow,
-
-                    // 📎 Файлы тикета
-                    Files = t.Files.Select(f => new TiketFileDto
-                    {
-                        Id = f.Oid,
-                        FileName = f.FileName,
-                        FileUrl = f.FileUrl,
-                        IsResponse = f.IsResponse
-                    }).ToList(),
-
-                    // 💬 Решения
-                    Solution = t.Solutions.Select(s => new TiketSolutionDto
-                    {
-                        Id = s.Oid,
-                        Author = s.Author != null ? s.Author.Oid : 0,
-                        User = s.User != null ? s.User.Oid : 0,
-                        MessageText = s.MessageText ?? string.Empty,
-                        CreatedAt = s.CreatedAt,
-
-                        // если EmailList хранится строкой через ;
-                        EmailList = string.IsNullOrEmpty(s.EmailList)
-                            ? new List<string> { s.Author.Email }
-                            : s.EmailListParsed
-                    }).ToList(),
-
-                    Comment = t.Messages.Select(m => new TiketCommentDto
-                    {
-                        Id = m.Oid,
-                        Tiket = m.Tiket.Oid,
-                        Author = m.Author != null ? m.Author.Oid : 0,
-                        MailMessageId = m.EmailMessageId,
-                        CreatedAt = m.CreatedAt,
-                        MessageText = m.MessageText ?? string.Empty,
-                    }).ToList(),
-                }).ToList();
             return Ok(new
             {
                 TotalCount = totalCount,
@@ -535,17 +318,74 @@ public class TiketController : ControllerBase
                 tikets = result
             });
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             return StatusCode(500, $"Ошибка: {ex.Message}");
         }
     }
 
 
-    [HttpGet("PostFilter")]
-    public IActionResult PostFilterFind([FromBody] TiketPostDto model)
+    [HttpGet("GetSearch")]
+    public IActionResult GetSearch(
+        [FromQuery] int? page = null,
+        [FromQuery] int? pageSize = null,
+        [FromQuery] string search = null)
     {
-        if (model == null) return BadRequest("Data is null");
+        IQueryable<Tiket> query = new XPQuery<Tiket>(_uow);
+
+        // 🔍 поиск (без убийства сервера)
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            if (int.TryParse(search, out int id))
+            {
+                query = query.Where(t => t.Oid == id);
+            }
+            else
+            {
+                query = query.Where(t =>
+                    t.Title.Contains(search) ||
+                    t.Company.Name.Contains(search) ||
+                    t.User.Name.Contains(search) ||
+                    t.Author.Name.Contains(search)
+                    );
+            }
+        }
+        else
+        {
+            return Ok(Array.Empty<TiketResponseDto>());
+        }
+        // 📦 если пагинации НЕТ
+        if (page == null && pageSize == null)
+        {
+            var data = query
+                .OrderByDescending(t => t.DataCreted)
+                .Take(100) // 💥 защита сервера
+                .Select(ToDto)
+                .ToList();
+
+            return Ok(data);
+        }
+
+        // 📄 если пагинация есть
+        int currentPage = page ?? 1;
+        int size = pageSize ?? 20;
+
+        var totalCount = query.Count();
+
+        var pagedData = query
+            .OrderByDescending(t => t.DataCreted)
+            .Skip((currentPage - 1) * size)
+            .Take(size)
+            .Select(ToDto)
+            .ToList();
+
+        return Ok(new
+        {
+            total = totalCount,
+            page = currentPage,
+            pageSize = size,
+            data = pagedData
+        });
 
     }
 
@@ -557,5 +397,68 @@ public class TiketController : ControllerBase
             throw new KeyNotFoundException($"{entityName} не найден");
         return entity;
     }
+
+
+    private TiketResponseDto ToDto(Tiket t) => new TiketResponseDto
+    {
+        Id = t.Oid,
+        Title = t.Title ?? string.Empty,
+        Description = t.Description ?? string.Empty,
+        AuthorId = t.Author != null ? t.Author.Oid : 0,
+        AuthorName = t.Author != null ? t.Author.Name : string.Empty,
+        CategoryName = t.Category != null ? t.Category.Name : string.Empty,
+        Phone = t.Phone ?? string.Empty,
+        CompanyId = t.Company != null ? t.Company.Oid : 0,
+        CompanyName = t.Company != null ? t.Company.Name : string.Empty,
+        SubCategoryName = t.SubCategory != null ? t.SubCategory.Name : string.Empty,
+        StateName = t.State != null ? t.State.Name : string.Empty,
+        StateId = t.State != null ? t.State.Oid : 0,
+        TypeTiketName = t.TypeTiket != null ? t.TypeTiket.Name : string.Empty,
+        PlatformId = t.Platform != null ? t.Platform.Oid : 0,
+        PlatformName = t.Platform != null ? t.Platform.Name : string.Empty,
+        WorkSpaceName = t.WorkSpace != null ? t.WorkSpace.Name : string.Empty,
+        UserId = t.User != null ? t.User.Oid : 0,
+        UserName = t.User != null ? t.User.Name : string.Empty,
+        PreorityName = t.Preorety != null ? t.Preorety.Name : string.Empty,
+        DataPhone = t.DataPhone,
+        ResaultPhone = t.ResaultPhone,
+        DateSecondPhone = t.DateSecondPhone,
+        BugNumber = t.BugNumber ?? string.Empty,
+        BugTransfer = t.BugTransfer,
+        ModeName = t.Mode != null ? t.Mode.Name : string.Empty,
+        DataCreted = t.DataCreted,
+        DataModefire = t.DataModefire,
+        DueDate = t.DueDate ?? DateTime.UtcNow,
+
+        Files = t.Files.Select(f => new TiketFileDto
+        {
+            Id = f.Oid,
+            FileName = f.FileName,
+            FileUrl = f.FileUrl,
+            IsResponse = f.IsResponse
+        }).ToList(),
+
+        Solution = t.Solutions.Select(s => new TiketSolutionDto
+        {
+            Id = s.Oid,
+            Author = s.Author != null ? s.Author.Oid : 0,
+            User = s.User != null ? s.User.Oid : 0,
+            MessageText = s.MessageText ?? string.Empty,
+            CreatedAt = s.CreatedAt,
+            EmailList = string.IsNullOrEmpty(s.EmailList)
+                ? new List<string> { s.Author.Email }
+                : s.EmailListParsed
+        }).ToList(),
+
+        Comment = t.Messages.Select(m => new TiketCommentDto
+        {
+            Id = m.Oid,
+            Tiket = m.Tiket.Oid,
+            Author = m.Author != null ? m.Author.Oid : 0,
+            MailMessageId = m.EmailMessageId,
+            CreatedAt = m.CreatedAt,
+            MessageText = m.MessageText ?? string.Empty,
+        }).ToList(),
+    };
 
 }

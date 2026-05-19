@@ -21,6 +21,7 @@ public class TiketFromEmail
         Platform platform = null;
         Tiket? existingTicket = null;
         Mode? existMode = null;
+        State? state = null;
 
         string? emailAddress = email.From.Mailboxes.FirstOrDefault()?.Address;
         if (emailAddress != null || emailAddress != "")
@@ -57,6 +58,15 @@ public class TiketFromEmail
             return null;
         }
 
+        if (state == null) {
+            state = uow.Query<State>()
+               .FirstOrDefault(p => p.Oid == 3);
+        }
+        if (company == null)
+        {
+            // Берём дефолтную компанию
+            company = uow.Query<Company>().FirstOrDefault(c => c.Oid == 1);
+        }
         company = uow.Query<Company>()
             .FirstOrDefault(p => p.Platforms.Any(a => a.Oid == platform.Oid));
 
@@ -138,6 +148,7 @@ public class TiketFromEmail
             Company = company,
             Platform = platform,
             Author = autor,
+            State = state,
             DataCreted = DateTime.Now,
             ResaultPhone = false,
             BugTransfer = false,

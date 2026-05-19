@@ -1,5 +1,6 @@
 ﻿using DevExpress.Schedule;
 using DevExpress.Xpo;
+using DocumentFormat.OpenXml.Wordprocessing;
 using System.Xml.Linq;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
@@ -12,6 +13,7 @@ public class EmptyDataDB
             new State(uow) { Name = "Открыт" };
             new State(uow) { Name = "Закрыт" };
             new State(uow) { Name = "В процессе" };
+            new State(uow) { Name = "Новая заявка" };
             
         }
         if (!uow.Query<Preority>().Any())
@@ -29,19 +31,9 @@ public class EmptyDataDB
         if (!uow.Query<TiketType>().Any())
         {
             new TiketType(uow) { Name = "E-mail" };
-            
-        }
-
-        if (!uow.Query<TiketType>().Any())
-        {
             new TiketType(uow) { Name = "Нормальный" };
-           
-        }
-
-        if (!uow.Query<TiketType>().Any())
-        {
             new TiketType(uow) { Name = "Нормальный" };
-            
+
         }
 
         if (!uow.Query<SubCategory>().Any())
@@ -136,6 +128,8 @@ public class EmptyDataDB
                 PermisionConstant.TicketCreate,
                 PermisionConstant.TicketUpdate,
                 PermisionConstant.TicketDelete,
+                PermisionConstant.TicketAssign,
+                PermisionConstant.TicketAttach,
                  // Пользователи
                 PermisionConstant.UserRead,
                 PermisionConstant.UserCreate,
@@ -154,7 +148,7 @@ public class EmptyDataDB
                 PermisionConstant.RoleUpdate,
                 PermisionConstant.RoleDelete,
                 PermisionConstant.RoleRead,
-                PermisionConstant.RoleUpdate,
+                PermisionConstant.RoleCreate,
 
                 PermisionConstant.AuthorCreate,
                 PermisionConstant.AuthorUpdate,
@@ -209,21 +203,23 @@ public class EmptyDataDB
                 PermisionConstant.WorkSpaceDelete,
                 PermisionConstant.WorkSpaceCreate
             };
-        }
 
-        if (!uow.Query<RolePermission>().Any())
-        {
-            var permision = uow.Query<Permission>().ToList();
-            var adminPermission = uow.Query<Role>().FirstOrDefault(p => p.Oid == 1);
-            foreach (var perm in permision)
+            foreach (var name in permissions)
             {
-              new RolePermission(uow)
-               {
-                Role = adminPermission,
-                Permission = perm
-               };
-               
+                var permission = new Permission(uow)
+                {
+                    Name = name,
+                    IsActive = true,
+                    DateCreated = DateTime.Now
+                };
+
+                new RolePermission(uow)
+                {
+                    Role = adminPermission,
+                    Permission = permission
+                };
             }
+
         }
         uow.CommitChanges();
     }

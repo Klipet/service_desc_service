@@ -40,7 +40,10 @@ public class EmailTemplateController : ControllerBase
                 State = state,
             };
             _uow.CommitChanges();
-            return Ok(resault);
+            return Ok(new
+            {
+                Oid = resault.Oid,
+            });
         }
         catch (Exception ex)
         {

@@ -34,9 +34,9 @@ public class Tiket : XPObject
     public XPCollection<TiketFile> Files => GetCollection<TiketFile>(nameof(Files));
 
     [Association("Tiket-TiketMessages")]
-    public XPCollection<TiketComment> Messages
+    public XPCollection<TiketMessage> Messages
     {
-        get { return GetCollection<TiketComment>(nameof(Messages)); }
+        get { return GetCollection<TiketMessage>(nameof(Messages)); }
     }
 
     [Association("Tiket-Solutions")]

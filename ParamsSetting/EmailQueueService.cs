@@ -17,18 +17,14 @@ public class EmailQueueService
     string messageText,
     List<string> emailListRaw)
     {
-    //    var settings = _uow.Query<CompanySettings>()
-     //       .FirstOrDefault();
 
         var variables = TicketTemplateVariables.Build(
             tiket,
             user,
             messageText
-        //    settings
             );
 
         var emailData = _templateService.Render(
-         //   EmailEventType.TicketAnswered,
             tiket,
             variables);
 

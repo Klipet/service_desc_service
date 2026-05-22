@@ -81,7 +81,7 @@ public class TiketFromEmail
         {
 
 
-            existingTicket = uow.Query<TiketComment>().FirstOrDefault(m => m.EmailMessageId == email.InReplyTo)?.Tiket;
+            existingTicket = uow.Query<TiketMessage>().FirstOrDefault(m => m.EmailMessageId == email.InReplyTo)?.Tiket;
             Console.WriteLine($"Проверка InReplyTo : {existingTicket}");
 
             if (existingTicket == null && email.References != null)
@@ -109,26 +109,30 @@ public class TiketFromEmail
             var cleanText = ExtractNewMessage(rawText);
 
 
-            var message = new TiketComment(uow)
+            var message = new TiketMessage(uow)
             {
                 Tiket = existingTicket,
                 MessageText = cleanText,
                 //    email.TextBody ?? email.HtmlBody ?? "",
                 CreatedAt = DateTime.Now,
                 Author = autor,
-                EmailMessageId = email.MessageId
+                EmailMessageId = email.MessageId,
+                IsRead = false,
+                ReadAt = null,
             };
 
             uow.Save(message);
             uow.CommitChanges();
             Console.WriteLine($"Создан Comment: {message.Oid}");
-            var comment = new TiketCommentDto
+            var comment = new TiketMessageDto
             {
                 Id = message.Oid,
                 Tiket = existingTicket.Oid,
                 Author = autor.Oid,
                 MailMessageId = email.MessageId,
                 CreatedAt = message.CreatedAt,
+                IsRead = false,
+                IsUser = false,
                 MessageText = message.MessageText ?? ""
             };
 
@@ -162,6 +166,8 @@ public class TiketFromEmail
 
         // Сохраняем тикет в базе
         uow.Save(tiket);
+
+
 
         if (email.Attachments != null && email.Attachments.Any())
         {
@@ -270,15 +276,15 @@ public class TiketFromEmail
                         : s.EmailListParsed
                 }).ToList(),
 
-                Comment = tiket.Messages.Select(m => new TiketCommentDto
-                {
-                    Id = m.Oid,
-                    Tiket = m.Tiket.Oid,
-                    Author = m.Author != null ? m.Author.Oid : 0,
-                    MailMessageId = m.EmailMessageId,
-                    CreatedAt = m.CreatedAt,
-                    MessageText = m.MessageText ?? string.Empty,
-                }).ToList(),
+                //Comment = tiket.Messages.Select(m => new TiketCommentDto
+                //{
+                //    Id = m.Oid,
+                //    Tiket = m.Tiket.Oid,
+                //    Author = m.Author != null ? m.Author.Oid : 0,
+                //    MailMessageId = m.EmailMessageId,
+                //    CreatedAt = m.CreatedAt,
+                //    MessageText = m.MessageText ?? string.Empty,
+                //}).ToList(),
             }
         };
     

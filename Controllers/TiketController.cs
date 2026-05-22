@@ -450,11 +450,13 @@ public class TiketController : ControllerBase
                 : s.EmailListParsed
         }).ToList(),
 
-        Comment = t.Messages.Select(m => new TiketCommentDto
+        Message = t.Messages.Select(m => new TiketMessageResponseDto
         {
             Id = m.Oid,
             Tiket = m.Tiket.Oid,
-            Author = m.Author != null ? m.Author.Oid : 0,
+            IsUser = m.IsUser,
+            AuthorOid = m.Author != null ? m.Author.Oid : 0,
+            AuthorName = m.Author != null ? m.Author.Name : "",
             MailMessageId = m.EmailMessageId,
             CreatedAt = m.CreatedAt,
             MessageText = m.MessageText ?? string.Empty,

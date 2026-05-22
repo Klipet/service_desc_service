@@ -51,53 +51,7 @@ public class EmailBackgroundService : BackgroundService
                             _logger.LogInformation($"отправляю Comment : {tiсket.Comment.Id}");
                             await _hub.Clients.All.SendAsync("NewComment", tiсket.Comment);
                         }
-                        //var commentDto = new TiketCommentDto
-                        //{
-                        //    Id = lastMessage.Oid,
-                        //    Tiket = tiсket.Oid,
-                        //    Author = lastMessage.Author?.Oid ?? 0,
-                        //    MailMessageId = lastMessage.EmailMessageId,
-                        //    CreatedAt = lastMessage.CreatedAt,
-                        //    MessageText = lastMessage.MessageText ?? string.Empty,
-                        //};
-
-                        //if(!string.IsNullOrEmpty(email.InReplyTo))
-                        //{
-                        //   await _hub.Clients.All.SendAsync("NewComment", commentDto);
-                        //}
-                        //else
-                        //{
-                        //    await _hub.Clients.All.SendAsync("NewTicketCreated", new
-                        //    {
-                        //        Id = tiсket.Oid,
-                        //        Title = tiсket.Title,
-                        //        Description = tiсket.Description,
-                        //        AuthorName = tiсket.Author?.Name ?? "",
-                        //        AuthorId = tiсket.Author?.Oid ?? 0,
-                        //        CategoryName = "",
-                        //        Phone = "",
-                        //        CompanyName = tiсket.Company.Name,
-                        //        CompanyId = tiсket.Company.Oid,
-                        //        SubCategoryName = "",
-                        //        StateName = "",
-                        //        TypeTiketName = "",
-                        //        PlatformName = tiсket.Platform.Name,
-                        //        PlatformId = tiсket.Platform.Oid,
-                        //        WorkSpaceName = "",
-                        //        UserName = "",
-                        //        UserId = 0,
-                        //        PreorityName = "",
-                        //        DataPhone = DateTime.Now,
-                        //        ResaultPhone = false,
-                        //        DateSecondPhone = DateTime.Now,
-                        //        BugNumber = "",
-                        //        BugTransfer = false,
-                        //        ModeId = 0,
-                        //        ModeName = "",
-                        //        DataCreted = DateTime.Now,
-                        //        DueDate = tiсket.DueDate ?? DateTime.UtcNow,
-                        //    });
-                        //}
+                       
                     }
                     catch (Exception ex)
                     {

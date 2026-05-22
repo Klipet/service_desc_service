@@ -22,6 +22,9 @@ public class TiketSolutionController: ControllerBase
             .Any(rp => rp.Permission.Name == code
                     && rp.Permission.IsActive) ?? false;
 
+
+ 
+
     [HttpPost("Solution")]
     public IActionResult Create([FromBody] TiketSolutionDto model)
     {
@@ -41,7 +44,9 @@ public class TiketSolutionController: ControllerBase
             Author = autor,
             User = user,
             MessageText = model.MessageText,
-            EmailListParsed = model.EmailList
+            EmailListParsed = model.EmailList,
+            
+           
         };
         _uow.CommitChanges();
 

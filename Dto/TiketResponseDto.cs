@@ -59,7 +59,7 @@
 
     public List<TiketFileDto> Files { get; set; } = new();
     public List<TiketSolutionDto> Solution { get; set; } = new();
-    public List<TiketCommentDto> Comment { get; set; } = new();
+    public List<TiketMessageResponseDto> Message { get; set; } = new();
 }
 
 public class TiketPostDto

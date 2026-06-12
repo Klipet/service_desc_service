@@ -105,7 +105,8 @@ public class TiketController : ControllerBase
             BugNumber = model.BugNumber,
             BugTransfer = model.BugTransfer,
             Mode = md,
-            DataCreted = DateTime.UtcNow
+            DataCreted = DateTime.UtcNow,
+            IsActive = model.IsActive
         };
         try
         {
@@ -226,6 +227,7 @@ public class TiketController : ControllerBase
             tiket.BugTransfer = dto.BugTransfer;
             tiket.Mode = md;
             tiket.DataCreted = dto.DataCreted;
+            tiket.IsActive = dto.IsActive;
 
 
             _uow.CommitChanges();
@@ -256,6 +258,7 @@ public class TiketController : ControllerBase
             if (ticket == null)
                 return NotFound($"Тикет с id={id} не найден");
 
+            ticket.IsActive = false;
             // Удаляем
             _uow.Delete(ticket);
             _uow.CommitChanges();
@@ -388,6 +391,83 @@ public class TiketController : ControllerBase
         });
 
     }
+
+    [HttpPost("MargeTickets")]
+    public IActionResult ServiceMargeTickets([FromBody] MenageTiketRequest request)
+    {
+        if (!HasPermission(PermisionConstant.TicketUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
+        Tiket primaryTiket = _uow.GetObjectByKey<Tiket>(request.PrymoryTiketId);
+
+        try
+        {
+            if (primaryTiket == null)
+                return NotFound(new { error = $"Заявка #{request.PrymoryTiketId} не найдена", errorCode = 404 });
+
+            if (request.SecindTiketId == null || request.SecindTiketId.Count == 0)
+                return BadRequest(new { error = "Не указаны заявки для объединения", errorCode = 400 });
+
+            if (request.SecindTiketId.Contains(request.PrymoryTiketId))
+                return BadRequest(new { error = "Нельзя объединить заявку с самой собой", errorCode = 400 });
+
+            foreach (int secondId in request.SecindTiketId)
+            {
+                Tiket secondTiket = _uow.GetObjectByKey<Tiket>(secondId);
+
+                if (secondTiket == null)
+                    return NotFound(new { error = $"Заявка #{secondId} не найдена", errorCode = 404 });
+
+                if (secondTiket.IsActive == false)
+                    return BadRequest(new { error = $"Заявка #{secondId} не активна или удалена", errorCode = 400 });
+
+                // 2. Переносим все сообщения второй заявки в первую
+                XPCollection<TiketMessage> messages = new XPCollection<TiketMessage>(
+                    _uow,
+                    CriteriaOperator.Parse("Tiket = ?", secondId)
+                );
+                foreach (TiketMessage message in messages)
+                {
+                    message.Tiket = primaryTiket;
+                }
+
+                TiketMessage ticketMessage = new TiketMessage(_uow)
+                {
+                    Tiket = primaryTiket,
+                    MessageText = secondTiket.Description,
+                    Author = secondTiket.Author,
+                    EmailMessageId = secondTiket.MessageId,
+                    CreatedAt = secondTiket.DataCreted,
+                    IsRead = false,
+                    IsUser = false
+                };
+
+                // 3. Переносим все файлы второй заявки в первую
+                XPCollection<TiketFile> files = new XPCollection<TiketFile>(_uow);
+                files.Criteria = CriteriaOperator.Parse("Tiket = ?", secondId);
+                foreach (TiketFile file in files)
+                {
+                    file.Tiket = primaryTiket;
+                }
+
+                // 4. Удаляем вторую заявку
+                _uow.Delete(secondTiket);
+            }
+
+            // 5. Сохраняем всё в транзакции
+            _uow.CommitChanges();
+            return Ok(new
+            {
+                state = 200,
+                message = $"Заявка #{request.PrymoryTiketId} успешно объединена с заявками: {string.Join(", ", request.SecindTiketId)}"
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, errorCode = 500 });
+        }
+    }
+
 
 
     private T GetOrFail<T>(UnitOfWork uow, int id, string entityName) where T : XPObject

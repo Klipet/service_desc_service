@@ -15,7 +15,7 @@
             ["Deadline"] = tiket.DueDate?.ToString("dd.MM.yyyy"),
             ["MessageText"] = messageText,
         //    ["TicketUrl"] = $"{settings?.BaseUrl}/tickets/{tiket.Oid}",
-         //   ["CompanyName"] = settings?.CompanyName,
+            ["CompanyName"] = tiket?.Company?.Name,
         //    ["LogoUrl"] = settings?.LogoUrl,
         //    ["CompanyFooter"] = settings?.EmailFooterHtml
         };

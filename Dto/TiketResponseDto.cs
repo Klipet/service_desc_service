@@ -92,6 +92,13 @@ public class TiketPostDto
     public int AuthorId { get; set; }
     public int PlatformId { get; set; }
     public int CompanyId { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class MenageTiketRequest
+{
+    public int PrymoryTiketId { get; set; }
+    public List<int> SecindTiketId { get; set; }
 }
 
 

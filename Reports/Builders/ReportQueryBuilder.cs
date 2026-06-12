@@ -108,29 +108,6 @@ public class ReportQueryBuilder
     {
         var level = config.DateGrouping; // уровень группировки из конфига
 
-    /*    // Фильтруем по сезону на уровне БД, если выбран конкретный сезон
-        if (level == DateGroupingLevel.Spring || level == DateGroupingLevel.Summer ||
-            level == DateGroupingLevel.Autumn || level == DateGroupingLevel.Winter)
-        {
-            string seasonName = level.ToString(); // "Spring", "Summer"...
-                                                  // Преобразуем в русское название для проверки
-            string seasonRu = level switch
-            {
-                DateGroupingLevel.Spring => "Весна",
-                DateGroupingLevel.Summer => "Лето",
-                DateGroupingLevel.Autumn => "Осень",
-                DateGroupingLevel.Winter => "Зима",
-                _ => ""
-            };
-            // Добавляем фильтр по месяцу, чтобы не тянуть все данные
-            query = query.Where(t =>
-                (seasonRu == "Весна" && t.DataCreted.Month >= 3 && t.DataCreted.Month <= 5) ||
-                (seasonRu == "Лето" && t.DataCreted.Month >= 6 && t.DataCreted.Month <= 8) ||
-                (seasonRu == "Осень" && t.DataCreted.Month >= 9 && t.DataCreted.Month <= 11) ||
-                (seasonRu == "Зима" && (t.DataCreted.Month == 12 || t.DataCreted.Month <= 2))
-            );
-        }
-    */
         var grouped = query
             .AsEnumerable() // материализуем отфильтрованные данные
             .GroupBy(t => GetDateGroupKey(t.DataCreted, level))

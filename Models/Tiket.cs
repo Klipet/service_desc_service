@@ -29,7 +29,14 @@ public class Tiket : XPObject
     private DateTime? _dueDate;
     private string _email;
     private string _messageId;
+    private bool _isActive;
 
+
+    public bool IsActive
+    {
+        get => _isActive;
+        set => SetPropertyValue(nameof(IsActive), ref _isActive, value);
+    }
     [Association("Tiket-TiketFiles")]
     public XPCollection<TiketFile> Files => GetCollection<TiketFile>(nameof(Files));
 

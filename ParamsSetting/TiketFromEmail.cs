@@ -157,6 +157,7 @@ public class TiketFromEmail
             ResaultPhone = false,
             BugTransfer = false,
             Mode = existMode,
+            IsActive = true,
             DueDate = DateTime.Now.AddHours(2),
         };
 

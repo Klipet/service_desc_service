@@ -15,15 +15,20 @@ public class Core
         string connectionString = _configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
 
-        //   return Connect(connectionString);
-
-
         try
         {
             MyXPO.ConnectionString = connectionString;
-            // Только проверяем соединение — миграции уже сделал migrator
-            using var uow = MyXPO.GetNewUnitOfWork();
-            uow.Query<State>().Any(); // просто ping
+
+            if (!UpdatedDatabase)
+            {
+                MyXPO.UpdateDataBase();
+                UpdatedDatabase = true;
+            }
+
+            // Запускаем миграции
+            var runner = new MigrationRunner();
+            runner.Run();
+
             Console.WriteLine("[API] Database connection OK.");
             return true;
         }
@@ -33,7 +38,6 @@ public class Core
             MyXPO.Reset();
             return false;
         }
-
     }
 
     private static bool Connect(string connectionString = "")

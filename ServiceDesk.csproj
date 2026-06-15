@@ -21,7 +21,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
-
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="https://www.schemastore.org/aws-cdk-appconfig-featureflags-1.0.0.json" /></VisualStudio></ProjectExtensions>
 
 </Project>

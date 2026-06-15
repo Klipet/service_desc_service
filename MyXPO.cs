@@ -154,12 +154,13 @@ public class MyXPO
     public static void UpdateDataBase()
     {
         var dict = new ReflectionDictionary();
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-        dict.GetDataStoreSchema(typeof(EmptyDataDB).Assembly);
+        dict.GetDataStoreSchema(assemblies);
         var connectionString = ConnectionString?.Replace("XpoDataStorePool=True;", "");
         var dataStore = CreateDataStore(
             connectionString,
-            AutoCreateOption.DatabaseAndSchema
+            AutoCreateOption.SchemaAlreadyExists
         );
 
         var dataLayer = new SimpleDataLayer(dict, dataStore);

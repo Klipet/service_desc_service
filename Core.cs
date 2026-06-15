@@ -1,4 +1,6 @@
-﻿public class Core
+﻿using DevExpress.Xpo;
+
+public class Core
 {
     private static bool UpdatedDatabase = false;
     private readonly IConfiguration _configuration;
@@ -13,7 +15,25 @@
         string connectionString = _configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
 
-       return Connect(connectionString);
+        //   return Connect(connectionString);
+
+
+        try
+        {
+            MyXPO.ConnectionString = connectionString;
+            // Только проверяем соединение — миграции уже сделал migrator
+            using var uow = MyXPO.GetNewUnitOfWork();
+            uow.Query<State>().Any(); // просто ping
+            Console.WriteLine("[API] Database connection OK.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[API] DB connection failed: {ex.Message}");
+            MyXPO.Reset();
+            return false;
+        }
+
     }
 
     private static bool Connect(string connectionString = "")

@@ -99,6 +99,8 @@ public class Program
             app.MapHub<TicketHub>("/ticketHub");
 
             using var uow = MyXPO.GetNewUnitOfWork();
+
+
             EmptyDataDB.SendData(uow);
             app.UseSwagger();
             app.UseSwaggerUI();

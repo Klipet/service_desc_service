@@ -13,6 +13,15 @@ public class ApiKeyMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        var path = context.Request.Path;
+
+        if (path.StartsWithSegments("/ticketHub") ||
+        path.StartsWithSegments("/swagger"))
+        {
+            await _next(context);
+            return;
+        }
+
         string? apiKey = null;
         // Публичные эндпоинты пропускаем
         var endpoint = context.GetEndpoint();

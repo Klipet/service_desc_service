@@ -62,6 +62,8 @@ public class Program
             builder.Services.AddHostedService<EmailSenderBackgroundService>();
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
+
+
             builder.Services.AddSignalR();
 
             builder.Services.AddTransient<TiketFromEmail>(); // ← эта строка отсутствует

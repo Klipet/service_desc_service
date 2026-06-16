@@ -1,3 +1,6 @@
-﻿ public class TiketTypeDto : BaseDto { }
+﻿public class TiketTypeDto : BaseDto 
+{
+
+}
 
 

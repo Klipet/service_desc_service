@@ -31,7 +31,7 @@ public class EmailBackgroundService : BackgroundService
 
 
                 var emails = emailService.GetEmails();
-                _logger.LogInformation($"Получено писем: {emails.Count}");
+            //    _logger.LogInformation($"Получено писем: {emails.Count}");
 
                 foreach (var email in emails)
                 {
@@ -42,13 +42,13 @@ public class EmailBackgroundService : BackgroundService
 
                         if (tiсket.IsNewTicket)
                         {
-                            _logger.LogInformation($"отправляю Ticket : {tiсket.Ticket.Id}");
+                        //    _logger.LogInformation($"отправляю Ticket : {tiсket.Ticket.Id}");
                             await _hub.Clients.All.SendAsync("NewTicketCreated", tiсket.Ticket);
 
                         }
                         else
                         {
-                            _logger.LogInformation($"отправляю Comment : {tiсket.Comment.Id}");
+                         //   _logger.LogInformation($"отправляю Comment : {tiсket.Comment.Id}");
                             await _hub.Clients.All.SendAsync("NewComment", tiсket.Comment);
                         }
                        

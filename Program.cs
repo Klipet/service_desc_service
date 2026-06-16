@@ -6,7 +6,6 @@ using NLog.Web;
 
 public class Program
 {
-   
     public static void Main(string[] args)
     {
         try
@@ -17,11 +16,24 @@ public class Program
 
 
             var core = new Core(builder.Configuration);
-        //    if (!core.InitializeConnection())
-        //    {
-        //        Console.WriteLine("[FATAL] Cannot start application: database connection failed.");
-        //        return;
-         //   }
+            if (args.Contains("--migrate"))
+            {
+                var connectionString = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json")
+                    .AddEnvironmentVariables()
+                    .Build()
+                    .GetConnectionString("DefaultConnection")
+                    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
+
+                MyXPO.ConnectionString = connectionString;
+                MyXPO.UpdateDataBase();
+
+                var runner = new MigrationRunner();
+                runner.Run();
+
+                Console.WriteLine("[Migrator] Done.");
+                return;
+            }
             core.InitializeConnection();
 
             builder.Services.AddScoped(provider => MyXPO.GetNewUnitOfWork());
@@ -98,12 +110,12 @@ public class Program
             app.UseCors();
             app.MapHub<TicketHub>("/ticketHub");
 
-            using var uow = MyXPO.GetNewUnitOfWork();
-            EmptyDataDB.SendData(uow);
+        //    using var uow = MyXPO.GetNewUnitOfWork();
+        //    EmptyDataDB.SendData(uow);
             app.UseSwagger();
             app.UseSwaggerUI();
 
-            //    app.UseHttpsRedirection();
+        //    app.UseHttpsRedirection();
             app.UseMiddleware<ApiKeyMiddleware>();
             app.UseAuthorization();
             app.MapControllers();

@@ -46,7 +46,7 @@ public class Program
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:8080", "http://localhost:5000") // ← порты твоего Flutter Web
+                    policy.WithOrigins("http://localhost:8080", "http://localhost:5000", "https://dev-servicedesk.edi.md") // ← порты твоего Flutter Web
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials(); // ← обязательно для SignalR
@@ -105,22 +105,32 @@ public class Program
             });
             builder.Services.AddSingleton<S3Service>();
             builder.WebHost.UseUrls("http://0.0.0.0:5000");
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
+                options.Limits.MinRequestBodyDataRate = null;
+            });
+
+
+
             var app = builder.Build();
 
+            app.UseRouting();
             app.UseCors();
-            app.MapHub<TicketHub>("/ticketHub");
+            app.UseWebSockets();
 
-        //    using var uow = MyXPO.GetNewUnitOfWork();
-        //    EmptyDataDB.SendData(uow);
             app.UseSwagger();
             app.UseSwaggerUI();
 
-        //    app.UseHttpsRedirection();
             app.UseMiddleware<ApiKeyMiddleware>();
             app.UseAuthorization();
+
+            app.MapHub<TicketHub>("/ticketHub");
             app.MapControllers();
+
             app.Run();
-        }catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Console.WriteLine($"DI Error: {ex.InnerException?.Message ?? ex.Message}");
             throw;

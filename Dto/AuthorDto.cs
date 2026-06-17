@@ -1,7 +1,7 @@
 ﻿public class AuthorDto: BaseDto
 {
-    public string phone { get; set; }
-    public string email { get; set; }
+    public string Phone { get; set; }
+    public string Email { get; set; }
 
     //Platform
     public string PlatformName { get; set; }

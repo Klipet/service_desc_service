@@ -37,8 +37,8 @@ public class AuthorController : ControllerBase
                 Oid = t.Oid,
                 Name = t.Name,
                 Active = t.Active,
-                phone = t.Phone,
-                email = t.Email,
+                Phone = t.Phone,
+                Email = t.Email,
                 DateCreated = t.DateCreated,
                 DateModifire = t.DateModified,
 
@@ -71,8 +71,8 @@ public class AuthorController : ControllerBase
                 Active = model.Active,
                 DateCreated = model.DateCreated,
                 Platform = pl,
-                Phone = model.phone,
-                Email = model.email,
+                Phone = model.Phone,
+                Email = model.Email,
             };
 
             try
@@ -91,8 +91,8 @@ public class AuthorController : ControllerBase
                 DateCreated = author.DateCreated,
                 PlatformId = author.Platform.Oid,
                 PlatformName = author.Platform.Name,
-                phone = author.Phone,
-                email = author.Email,
+                Phone = author.Phone,
+                Email = author.Email,
             };
             //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
             return Ok(resault);
@@ -122,8 +122,8 @@ public class AuthorController : ControllerBase
             Active = author.Active,
             DateCreated = author.DateCreated,
             DateModifire = author.DateModified,
-            email = author.Email,
-            phone = author.Phone,
+            Email = author.Email,
+            Phone = author.Phone,
             PlatformId = pl.Oid,
             PlatformName = pl.Name
         };
@@ -148,8 +148,8 @@ public class AuthorController : ControllerBase
             author.Platform = sc;
             author.Name = dto.Name;
             author.Active = dto.Active;
-            author.Phone = dto.phone;
-            author.Email = dto.email;
+            author.Phone = dto.Phone;
+            author.Email = dto.Email;
 
             _uow.CommitChanges();
 

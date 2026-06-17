@@ -1,5 +1,7 @@
 ﻿using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 
 [ApiController]
 [Route("[controller]")]
@@ -30,22 +32,40 @@ public class CompanyController : ControllerBase
         {
 
             var category = _uow.Query<Company>().ToList();
-
+            
             Console.WriteLine($"Найдено Company: {category.Count}");
 
-            var result = category.Select(t => new CompanyDto
+            var result = category.Select(t => new
             {
                 Oid = t.Oid,
                 Name = t.Name,
                 Idnp = t.Idnp,
-                ComapnyStateOid = t.CompanyState.Oid,
-                ComapnyStateName = t.CompanyState.Name,
+                CompanyStateOid = t.CompanyState.Oid,
+                CompanyStateName = t.CompanyState.Name,
                 Active = t.Active,
                 DateModifire = t.DateModified,
                 DateCreated = t.DateCreated,
-
+                Platforms = t.Platforms.Select(p => new
+                {
+                    Oid = p.Oid,
+                    Name = p.Name,
+                    Active = p.Active,
+                    DateCreated = p.DateCreated,
+                    DateModifire = p.DateModified,
+                    Autor = p.Authors.Select(a => new AuthorDto
+                    {
+                        Oid = a.Oid,
+                        Name = a.Name,
+                        Active = a.Active,
+                        DateCreated = a.DateCreated,
+                        DateModifire = a.DateModified,
+                        Phone = a.Phone,
+                        Email = a.Email
+                    }).ToList(),
+                }).ToList(),
 
             }).ToList();
+
 
             return Ok(result);
         }
@@ -174,6 +194,62 @@ public class CompanyController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Ошибка при удалении: {ex.Message}");
+        }
+    }
+
+    [HttpGet("Search")]
+    public IActionResult Search([FromQuery] string? query, [FromQuery] int take = 20)
+    {
+        if (!HasPermission(PermisionConstant.UserRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
+        try
+        {
+            var queryable = _uow.Query<Company>().Where(c => c.Active);
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var lowerQuery = query.ToLower();
+                queryable = queryable.Where(c => c.Name.ToLower().Contains(lowerQuery));
+            }
+
+            var result = queryable.Select(t => new
+            {
+                Oid = t.Oid,
+                Name = t.Name,
+                Idnp = t.Idnp,
+                CompanyStateOid = t.CompanyState.Oid,
+                CompanyStateName = t.CompanyState.Name,
+                Active = t.Active,
+                DateModifire = t.DateModified,
+                DateCreated = t.DateCreated,
+                Platforms = t.Platforms.Select(p => new
+                {
+                    Oid = p.Oid,
+                    Name = p.Name,
+                    Active = p.Active,
+                    DateCreated = p.DateCreated,
+                    DateModifire = p.DateModified,
+                    Autor = p.Authors.Select(a => new AuthorDto
+                    {
+                        Oid = a.Oid,
+                        Name = a.Name,
+                        Active = a.Active,
+                        DateCreated = a.DateCreated,
+                        DateModifire = a.DateModified,
+                        Phone = a.Phone,
+                        Email = a.Email
+                    }).ToList(),
+                }).ToList(),
+
+            }).ToList();
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+         //   _logger.LogError(ex, "Ошибка при поиске компаний по запросу {Query}", query);
+            return StatusCode(500, new { error = "Внутренняя ошибка сервера", errorCode = 500 });
         }
     }
 }

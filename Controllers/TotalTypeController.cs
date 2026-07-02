@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using DevExpress.Xpo;
+﻿using DevExpress.Xpo;
+using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("[controller]")]
 [ApiKey]
-public class TotalTypeControler : ControllerBase
+public class TotalTypeController : ControllerBase
 {
     private readonly UnitOfWork _uow;
-    public TotalTypeControler(UnitOfWork uow)
+    public TotalTypeController(UnitOfWork uow)
     {
         _uow = uow;
     }
@@ -19,11 +21,12 @@ public class TotalTypeControler : ControllerBase
                     && rp.Permission.IsActive) ?? false;
 
 
-    [HttpGet("TotalType")]
+    [HttpGet()]
     public IActionResult GetAll()
     {
         if (!HasPermission(PermisionConstant.TicketCreate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         var tiketType = _uow.Query<TiketType>()
             .Where(t => t.Active)
             .Select(t => new TotalTypeDto
@@ -64,13 +67,24 @@ public class TotalTypeControler : ControllerBase
             }).ToList();
         var tiketCategory = _uow.Query<Category>()
             .Where(t => t.Active)
-            .Select(t => new TotalTypeDto
+            .ToList()
+            .Select(t => new
             {
                 Oid = t.Oid,
                 Name = t.Name,
                 Active = t.Active,
                 DateCreated = t.DateCreated,
+                SubCategories = t.SubCategorys
+                .Where(c => c.Active)
+                .Select( c => new TotalTypeDto
+                 {
+                    Oid = c.Oid,
+                    Name = c.Name,
+                    Active = c.Active,
+                    DateCreated = c.DateCreated,
+                }).ToList()
             }).ToList();
+
         var tiketWorkSpace = _uow.Query<WorkSpace>()
             .Where(t => t.Active)
             .Select(t => new TotalTypeDto

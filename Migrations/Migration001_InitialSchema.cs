@@ -39,18 +39,18 @@ namespace ServiceDesk.Migrations
 
             if (!uow.Query<SubCategory>().Any())
             {
-                new SubCategory(uow) { Name = "Нормальный" };
+                new SubCategory(uow) { Name = "Счета", Active = true, Category = uow.GetObjectByKey<Category>(1) };
 
             }
             if (!uow.Query<Category>().Any())
             {
-                new Category(uow) { Name = "Нормальный" };
+                new Category(uow) { Name = "Касса", Active = true };
 
             }
 
             if (!uow.Query<Author>().Any())
             {
-                new Author(uow) { Name = "Нормальный" };
+                new Author(uow) { Name = "Клиент тест", Active = true, Email = "test@example.com", Platform = uow.GetObjectByKey<Platform>(1) };
 
             }
             if (!uow.Query<User>().Any())

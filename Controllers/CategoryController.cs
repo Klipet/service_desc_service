@@ -1,4 +1,5 @@
-﻿using DevExpress.Xpo;
+﻿using DevExpress.Data.Extensions;
+using DevExpress.Xpo;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
@@ -34,15 +35,20 @@ public class CategoryController : ControllerBase
             Console.WriteLine($"Найдено тикетов: {category.Count}");
 
 
-            var result = category.Select(t => new CategoryDto
+            var result = category.Select(t => new
             {
                 Oid = t.Oid,
                 Name = t.Name,
                 Active = t.Active,
-                subCategoryId = t.SubCategory.Oid,
-                subCategoryName = t.SubCategory.Name,
                 DateCreated = t.DateCreated,
-
+                subCategory = t.SubCategorys
+                .Where(sc => sc.Active)
+                .Select(sc => new{
+                   sc.Oid,
+                   sc.Name,
+                   sc.Active
+                  }
+                ).ToList(),
             }).ToList();
 
             return Ok(result);
@@ -64,15 +70,15 @@ public class CategoryController : ControllerBase
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
-        var sc = uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == model.subCategoryId);
-        if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
+    //    var sc = uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == model.subCategoryId);
+    //    if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
 
         var category = new Category(uow)
         {
             Name = model.Name,
             Active = model.Active,
             DateCreated = model.DateCreated,
-            SubCategory = sc,
+         //   SubCategory = sc,
         };
 
         try
@@ -83,14 +89,20 @@ public class CategoryController : ControllerBase
         {
             return StatusCode(500, $"Error saving to database: {ex.Message}");
         }
-        var resault = new CategoryDto
+        var resault = new 
         {
             Oid = category.Oid,
             Name = category.Name,
             Active = category.Active,
             DateCreated = category.DateCreated,
-            subCategoryName = sc.Name,
-            subCategoryId = sc.Oid
+            subCategory = category.SubCategorys
+                .Where(sc => sc.Active)
+                .Select(sc => new {
+                    sc.Oid,
+                    sc.Name,
+                    sc.Active
+                }
+                ).ToList(),
         };
         //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
         return Ok(resault);
@@ -105,7 +117,7 @@ public class CategoryController : ControllerBase
         var category = _uow.GetObjectByKey<Category>(id);
         if (category == null) return NotFound();
 
-        var sc = _uow.GetObjectByKey<SubCategory>(category.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
+    //    var sc = _uow.GetObjectByKey<SubCategory>(category.SubCategory) ?? throw new KeyNotFoundException("SubCategory не найден");
 
         var categoriResponse = new CategoryDto
         {
@@ -113,8 +125,8 @@ public class CategoryController : ControllerBase
             Name = category.Name,
             Active = category.Active,
             DateCreated = category.DateCreated,
-            subCategoryName = sc.Name,
-            subCategoryId = sc.Oid
+        //    subCategoryName = sc.Name,
+        //    subCategoryId = sc.Oid
         };
         return Ok(categoriResponse);
     }
@@ -133,13 +145,13 @@ public class CategoryController : ControllerBase
             if (category == null)
                 return NotFound($"Тикет с Id {id} не найден");
 
-            var sc = _uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == dto.subCategoryId);
-            if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
+         //   var sc = _uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == dto.subCategoryId);
+         //   if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
 
-            category.SubCategory = sc;
+        //    category.SubCategory = sc;
             category.Name = dto.Name;
             category.Active = dto.Active;
-
+            category.DateModified = DateTime.Now;
             _uow.CommitChanges();
 
             return Ok($"Category {id} update");

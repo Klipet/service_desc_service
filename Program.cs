@@ -19,7 +19,7 @@ public class Program
             if (args.Contains("--migrate"))
             {
                 var connectionString = new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json")
+                    .AddJsonFile("appsettings.json", optional: true)
                     .AddEnvironmentVariables()
                     .Build()
                     .GetConnectionString("DefaultConnection")

@@ -494,6 +494,7 @@ public class TiketController : ControllerBase
         StateName = t.State != null ? t.State.Name : string.Empty,
         StateId = t.State != null ? t.State.Oid : 0,
         TypeTiketName = t.TypeTiket != null ? t.TypeTiket.Name : string.Empty,
+        TypeTiketId = t.TypeTiket != null ? t.TypeTiket.Oid : 0,
         PlatformId = t.Platform != null ? t.Platform.Oid : 0,
         PlatformName = t.Platform != null ? t.Platform.Name : string.Empty,
         WorkSpaceName = t.WorkSpace != null ? t.WorkSpace.Name : string.Empty,

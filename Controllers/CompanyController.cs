@@ -108,13 +108,15 @@ public class CompanyController : ControllerBase
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
-        var companyState = uow.Query<CompanyState>().FirstOrDefault(c => c.Oid == model.Oid);
+        var companyState = uow.Query<CompanyState>().FirstOrDefault(c => c.Oid == model.ComapnyStateOid);
 
-        var category = new Company(uow)
+        if (companyState == null) return NotFound($"CompanyState с Id {model.ComapnyStateOid} не найден");
+
+        var company = new Company(uow)
         {
             Name = model.Name,
             Active = model.Active,
-            DateCreated = model.DateCreated,
+            DateCreated = DateTime.Now,
             Idnp = model.Idnp,
             CompanyState = companyState
         };
@@ -129,13 +131,13 @@ public class CompanyController : ControllerBase
         }
         var resault = new CompanyDto
         {
-            Oid = category.Oid,
-            Name = category.Name,
-            Active = category.Active,
-            DateCreated = category.DateCreated,
-            Idnp = category.Idnp,
-            ComapnyStateOid = category.CompanyState.Oid,
-            ComapnyStateName = category.CompanyState.Name,
+            Oid = company.Oid,
+            Name = company.Name,
+            Active = company.Active,
+            DateCreated = company.DateCreated,
+            Idnp = company.Idnp,
+            ComapnyStateOid = company.CompanyState.Oid,
+            ComapnyStateName = company.CompanyState.Name,
         };
         //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
         return Ok(resault);

@@ -100,7 +100,12 @@ public class SubCategoryController: ControllerBase
 
         _uow.CommitChanges();
 
-        return Ok(subCategory.Oid);
+        return Ok(new {
+           Oid = subCategory.Oid,
+           Name = subCategory.Name,
+           Active = subCategory.Active,
+           CategoryOid = subCategory.Category.Oid,
+        });
     }
 
     [HttpPut("Update[controller]ById")]

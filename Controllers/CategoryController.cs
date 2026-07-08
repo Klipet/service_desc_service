@@ -70,15 +70,12 @@ public class CategoryController : ControllerBase
         using var uow = MyXPO.GetNewUnitOfWork();
         if (model == null) return BadRequest("Data is null");
 
-    //    var sc = uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == model.subCategoryId);
-    //    if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
 
         var category = new Category(uow)
         {
             Name = model.Name,
             Active = model.Active,
             DateCreated = model.DateCreated,
-         //   SubCategory = sc,
         };
 
         try
@@ -95,16 +92,7 @@ public class CategoryController : ControllerBase
             Name = category.Name,
             Active = category.Active,
             DateCreated = category.DateCreated,
-            subCategory = category.SubCategorys
-                .Where(sc => sc.Active)
-                .Select(sc => new {
-                    sc.Oid,
-                    sc.Name,
-                    sc.Active
-                }
-                ).ToList(),
         };
-        //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
         return Ok(resault);
     }
 
@@ -125,8 +113,6 @@ public class CategoryController : ControllerBase
             Name = category.Name,
             Active = category.Active,
             DateCreated = category.DateCreated,
-        //    subCategoryName = sc.Name,
-        //    subCategoryId = sc.Oid
         };
         return Ok(categoriResponse);
     }
@@ -145,10 +131,7 @@ public class CategoryController : ControllerBase
             if (category == null)
                 return NotFound($"Тикет с Id {id} не найден");
 
-         //   var sc = _uow.Query<SubCategory>().FirstOrDefault(e => e.Oid == dto.subCategoryId);
-         //   if (sc == null) throw new KeyNotFoundException("SubCategory не найден");
 
-        //    category.SubCategory = sc;
             category.Name = dto.Name;
             category.Active = dto.Active;
             category.DateModified = DateTime.Now;

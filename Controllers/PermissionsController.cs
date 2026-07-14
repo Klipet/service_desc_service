@@ -33,12 +33,12 @@ public class PermissionsController : ControllerBase
                 Name = p.Name,
                 IsActive = p.IsActive,
                 DateCreated = p.DateCreated,
-                RolePermissions = p.RolePermissions.Select(rp => new RolePermissionDto
-                {
+            //    RolePermissions = p.RolePermissions.Select(rp => new RolePermissionDto
+            //    {
                    
-                    RoleId = rp.Role?.Oid ?? 0,
-                    RoleName = rp.Role?.Name ?? string.Empty,
-                }).ToList(),
+            //        RoleId = rp.Role?.Oid ?? 0,
+            //        RoleName = rp.Role?.Name ?? string.Empty,
+             //   }).ToList(),
             }).ToList();
 
 

@@ -30,7 +30,6 @@ public class Program
                 Console.WriteLine("[Migrator] Schema updated.");
                 var runner = new MigrationRunner();
                 runner.Run();
-
                 Console.WriteLine("[Migrator] Done.");
                 return;
             }

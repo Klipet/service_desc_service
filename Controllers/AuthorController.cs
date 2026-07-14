@@ -32,12 +32,18 @@ public class AuthorController : ControllerBase
             var category = _uow.Query<Author>().ToList();
             Console.WriteLine($"Найдено Author: {category.Count}");
 
+
+
             var result = category.Select(t => new AuthorDto
             {
                 Oid = t.Oid,
                 Name = t.Name,
                 Active = t.Active,
-                Phone = t.Phone,
+                Phone = t.Phones.Select(p => new PhoneDtoAuthor {
+                    Oid = p.Oid,
+                    Number = p.Number,
+                    DataCreated = p.DataCreated,
+                }).ToList(),
                 Email = t.Email,
                 DateCreated = t.DateCreated,
                 DateModifire = t.DateModified,
@@ -71,9 +77,20 @@ public class AuthorController : ControllerBase
                 Active = model.Active,
                 DateCreated = model.DateCreated,
                 Platform = pl,
-                Phone = model.Phone,
                 Email = model.Email,
             };
+            if (model.Phone != null)
+            {
+                foreach (var phoneDto in model.Phone)
+                {
+                    var phone = new Phone(uow)
+                    {
+                        Number = phoneDto.Number,
+                        Author = author,
+                        DataCreated = DateTime.Now,
+                    };
+                }
+            }
 
             try
             {
@@ -91,7 +108,12 @@ public class AuthorController : ControllerBase
                 DateCreated = author.DateCreated,
                 PlatformId = author.Platform.Oid,
                 PlatformName = author.Platform.Name,
-                Phone = author.Phone,
+                Phone = author.Phones.Select(p => new PhoneDtoAuthor
+                {
+                    Oid = p.Oid,
+                    Number = p.Number,
+                    DataCreated = p.DataCreated,
+                }).ToList(),
                 Email = author.Email,
             };
             //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
@@ -123,7 +145,12 @@ public class AuthorController : ControllerBase
             DateCreated = author.DateCreated,
             DateModifire = author.DateModified,
             Email = author.Email,
-            Phone = author.Phone,
+            Phone = author.Phones.Select(p => new PhoneDtoAuthor
+            {
+                Oid = p.Oid,
+                Number = p.Number,
+                DataCreated = p.DataCreated,
+            }).ToList(),
             PlatformId = pl.Oid,
             PlatformName = pl.Name
         };
@@ -133,14 +160,12 @@ public class AuthorController : ControllerBase
     [HttpPut("UpdateAutorById")]
     public IActionResult Update([FromQuery] int id, [FromBody] AuthorDto dto)
     {
-
         if (!HasPermission(PermisionConstant.AuthorUpdate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
             var author = _uow.Query<Author>().FirstOrDefault(t => t.Oid == id);
-
-            if (author == null) return NotFound($"Тикет с Id {id} не найден");
+            if (author == null) return NotFound($"Автор с Id {id} не найден");
 
             var sc = _uow.Query<Platform>().FirstOrDefault(e => e.Oid == dto.PlatformId);
             if (sc == null) throw new KeyNotFoundException("Platform не найден");
@@ -148,11 +173,46 @@ public class AuthorController : ControllerBase
             author.Platform = sc;
             author.Name = dto.Name;
             author.Active = dto.Active;
-            author.Phone = dto.Phone;
             author.Email = dto.Email;
 
-            _uow.CommitChanges();
+            // --- синхронизация телефонов ---
+            var incomingIds = dto.Phone?.Where(p => p.Oid != 0)
+                                         .Select(p => p.Oid)
+                                         .ToHashSet() ?? new HashSet<int>();
 
+            // удалить телефоны, которых больше нет в dto
+            var toRemove = author.Phones.Where(p => !incomingIds.Contains(p.Oid)).ToList();
+            foreach (var phone in toRemove)
+            {
+                phone.Delete();
+            }
+
+            // обновить существующие / добавить новые
+            if (dto.Phone != null)
+            {
+                foreach (var phoneDto in dto.Phone)
+                {
+                    if (phoneDto.Oid != 0)
+                    {
+                        var existing = author.Phones.FirstOrDefault(p => p.Oid == phoneDto.Oid);
+                        if (existing != null)
+                        {
+                            existing.Number = phoneDto.Number;
+                            existing.DataModefire = DateTime.Now;
+                            continue;
+                        }
+                    }
+
+                    var newPhone = new Phone(_uow)
+                    {
+                        Number = phoneDto.Number,
+                        Author = author,
+                        DataCreated = DateTime.Now,
+                    };
+                }
+            }
+
+            _uow.CommitChanges();
             return Ok($"Author {id} update");
         }
         catch (Exception ex)

@@ -81,6 +81,13 @@ public class EmptyDataDB
             new Mode(uow) { Name = "Нормальный" };
         
         }
+        if (!uow.Query<Phone>().Any())
+        {
+            new Phone(uow) { Number = "079000000" };
+            new Phone(uow) { DataCreated = DateTime.Now };
+            var author = uow.Query<Author>().FirstOrDefault(p => p.Oid == 1);
+            new Phone(uow) { Author = author };
+        }
 
         if (!uow.Query<HolidayDay>().Any())
         {

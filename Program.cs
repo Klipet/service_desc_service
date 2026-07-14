@@ -27,7 +27,7 @@ public class Program
 
                 MyXPO.ConnectionString = connectionString;
                 MyXPO.UpdateDataBase();
-
+                Console.WriteLine("[Migrator] Schema updated.");
                 var runner = new MigrationRunner();
                 runner.Run();
 
@@ -41,7 +41,7 @@ public class Program
             {
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
-
+          
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>

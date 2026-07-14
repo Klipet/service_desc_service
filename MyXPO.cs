@@ -69,12 +69,12 @@ public class MyXPO
         {
             if (_dataStore == null)
             {
-                _dataStore = CreateDataStore(ConnectionString, AutoCreateOption.SchemaAlreadyExists);
+                _dataStore = CreateDataStore(ConnectionString, AutoCreateOption.DatabaseAndSchema);
             }
 
             if (_dataLayer == null)
             {
-                _dataLayer = CreateDataLayer(_dataStore, AutoCreateOption.SchemaAlreadyExists);
+                _dataLayer = CreateDataLayer(_dataStore, AutoCreateOption.DatabaseAndSchema);
             }
         }
 
@@ -160,7 +160,7 @@ public class MyXPO
         var connectionString = ConnectionString?.Replace("XpoDataStorePool=True;", "");
         var dataStore = CreateDataStore(
             connectionString,
-            AutoCreateOption.SchemaAlreadyExists
+            AutoCreateOption.DatabaseAndSchema
         );
 
         var dataLayer = new SimpleDataLayer(dict, dataStore);

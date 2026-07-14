@@ -59,7 +59,12 @@ public class CompanyController : ControllerBase
                         Active = a.Active,
                         DateCreated = a.DateCreated,
                         DateModifire = a.DateModified,
-                        Phone = a.Phone,
+                        Phone = a.Phones.Select(p => new PhoneDtoAuthor
+                        {
+                            Oid = p.Oid,
+                            Number = p.Number,
+                            DataCreated = p.DataCreated,
+                        }).ToList(),
                         Email = a.Email
                     }).ToList(),
                 }).ToList(),
@@ -239,7 +244,12 @@ public class CompanyController : ControllerBase
                         Active = a.Active,
                         DateCreated = a.DateCreated,
                         DateModifire = a.DateModified,
-                        Phone = a.Phone,
+                        Phone = a.Phones.Select(p => new PhoneDtoAuthor
+                        {
+                            Oid = p.Oid,
+                            Number = p.Number,
+                            DataCreated = p.DataCreated,
+                        }).ToList(),
                         Email = a.Email
                     }).ToList(),
                 }).ToList(),

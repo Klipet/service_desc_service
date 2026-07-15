@@ -5,16 +5,19 @@ using System;
 public class ApiKeyMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly UnitOfWork _uow;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public ApiKeyMiddleware(RequestDelegate next, UnitOfWork uow)
+    public ApiKeyMiddleware(RequestDelegate next, IServiceScopeFactory scopeFactory)
     {
         _next = next;
-        _uow = uow;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
+        using var scope = _scopeFactory.CreateScope();
+        var uow = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
+
         var path = context.Request.Path;
 
         if (path.StartsWithSegments("/ticketHub") ||
@@ -52,7 +55,7 @@ public class ApiKeyMiddleware
         try
         {
             // ✅ Используйте инжектированный UoW вместо GetNewUnitOfWork()
-            var user = _uow.Query<User>()
+            var user = uow.Query<User>()
                 .FirstOrDefault(u => u.ApiKey == apiKey);
 
             if (user == null)

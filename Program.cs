@@ -34,9 +34,11 @@ public class Program
                 Console.WriteLine("[Migrator] Done.");
                 return;
             }
+
             core.InitializeConnection();
 
             builder.Services.AddScoped(provider => MyXPO.GetNewUnitOfWork());
+
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
@@ -161,9 +163,6 @@ public class Program
                     await context.Response.WriteAsJsonAsync(response);
                 });
             });
-
-
-
 
             app.Run();
         }

@@ -80,6 +80,7 @@ public class Program
 
 
             builder.Services.AddSwaggerGen();
+
             builder.Services.AddSwaggerGen(options =>
             {
                 options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme

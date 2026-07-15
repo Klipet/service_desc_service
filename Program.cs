@@ -108,15 +108,6 @@ public class Program
                 }
                 });
             });
-
-            builder.Services.AddLogging(config =>
-            {
-                config.ClearProviders();
-                config.AddConsole();
-                config.AddDebug();
-                config.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Debug);
-            });
-
             builder.Services.AddSingleton<S3Service>();
             builder.WebHost.UseUrls("http://0.0.0.0:5000");
             builder.WebHost.ConfigureKestrel(options =>
@@ -128,6 +119,32 @@ public class Program
 
 
             var app = builder.Build();
+
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/json";
+
+                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    var exception = exceptionHandlerPathFeature?.Error;
+
+                    // добавьте логирование, иначе ошибка нигде не фиксируется
+                    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(exception, "Unhandled exception on {Path}", context.Request.Path);
+
+                    var response = new
+                    {
+                        message = "Internal server error",
+                        detail = exception?.Message,
+                        stackTrace = exception?.StackTrace,
+                        type = exception?.GetType().Name
+                    };
+
+                    await context.Response.WriteAsJsonAsync(response);
+                });
+            });
 
             app.UseRouting();
             app.UseCors();
@@ -141,28 +158,6 @@ public class Program
 
             app.MapHub<TicketHub>("/ticketHub");
             app.MapControllers();
-
-            app.UseExceptionHandler(errorApp =>
-            {
-                errorApp.Run(async context =>
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/json";
-
-                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-                    var exception = exceptionHandlerPathFeature?.Error;
-
-                    var response = new
-                    {
-                        message = "Internal server error",
-                        detail = exception?.Message,
-                        stackTrace = exception?.StackTrace,
-                        type = exception?.GetType().Name
-                    };
-
-                    await context.Response.WriteAsJsonAsync(response);
-                });
-            });
 
             app.Run();
         }

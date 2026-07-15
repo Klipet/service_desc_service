@@ -188,12 +188,23 @@ public class UserController: ControllerBase
             return Unauthorized("Invalid credentials");
         if(user.IsActive == false)
             return Unauthorized("User is dezactivate");
-       
+
+
+        // Безопасное получение permissions
+        var permissions = user.RoleUser?.RolePermissions?
+            .Where(rp => rp.Permission != null && rp.Permission.IsActive)
+            .Select(rp => new
+            {
+                id = rp.Permission.Oid,
+                name = rp.Permission.Name
+            })
+            .ToList();
 
         try
         {
             user.ApiKey = ApiKeyGenerator.Generate();
             _uow.CommitChanges();
+
             return Ok(new
             {
                 status = 200,
@@ -204,14 +215,7 @@ public class UserController: ControllerBase
                     name = user.Name,
                     email = user.Email,
                     login = user.Loghin,
-                    permissions = user.RoleUser?.RolePermissions
-                    .Where(rp => rp.Permission != null && rp.Permission.IsActive)
-                    .Select(rp => new
-                    {
-                      
-                        id = rp.Permission.Oid,
-                        name = rp.Permission.Name
-                    }) ?? Enumerable.Empty<object>()
+                    permissions = permissions
                 }
             });
         }

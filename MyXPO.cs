@@ -144,7 +144,6 @@ public class MyXPO
         return new DevExpress.Xpo.ThreadSafeDataLayer(dict, dataStore);
     }
 
-
     // Method to update the database
     public static void UpdateDataBase()
     {

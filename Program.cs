@@ -158,7 +158,7 @@ public class Program
 
             app.MapHub<TicketHub>("/ticketHub");
             app.MapControllers();
-
+           
             app.Run();
         }
         catch (Exception ex)

@@ -99,9 +99,9 @@ public class TiketController : ControllerBase
             WorkSpace = wp,
             User = user,
             Preorety = pr,
-            DataPhone = model.DataPhone,
+            DataPhone = model.DataPhone ?? DateTime.MinValue,
             ResaultPhone = model.ResaultPhone,
-            DateSecondPhone = model.DateSecondPhone,
+            DateSecondPhone = model.DateSecondPhone ?? DateTime.MinValue,
             BugNumber = model.BugNumber,
             BugTransfer = model.BugTransfer,
             Mode = md,
@@ -220,9 +220,9 @@ public class TiketController : ControllerBase
             tiket.WorkSpace = wp;
             tiket.User = user;
             tiket.Preorety = pr;
-            tiket.DataPhone = dto.DataPhone;
+            tiket.DataPhone = dto.DataPhone ?? DateTime.MinValue;
             tiket.ResaultPhone = dto.ResaultPhone;
-            tiket.DateSecondPhone = dto.DateSecondPhone;
+            tiket.DateSecondPhone = dto.DateSecondPhone ?? DateTime.MinValue;
             tiket.BugNumber = dto.BugNumber;
             tiket.BugTransfer = dto.BugTransfer;
             tiket.Mode = md;

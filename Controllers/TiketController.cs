@@ -65,8 +65,7 @@ public class TiketController : ControllerBase
             if (model.UserId == 0)
             {
                 user = SettingTiket.GetUserRoundRobin(uow, workSpaceId: model.WorkSpaceId);
-
-                Console.WriteLine($"userId = {user.Oid}");
+                _logger.LogInformation("user = {User}", user == null ? "NULL" : user.Oid.ToString());
             }
             else
             {

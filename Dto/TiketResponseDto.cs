@@ -68,9 +68,9 @@ public class TiketPostDto
     public string Title { get; set; }
     public string Description { get; set; }
     public string Phone { get; set; }
-    public DateTime DataPhone { get; set; }
+    public DateTime? DataPhone { get; set; }
     public bool ResaultPhone { get; set; }
-    public DateTime DateSecondPhone { get; set; }
+    public DateTime? DateSecondPhone { get; set; }
     public string BugNumber { get; set; }
     public bool BugTransfer { get; set; }
     public DateTime DataCreted { get; set; }

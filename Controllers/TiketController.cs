@@ -156,7 +156,7 @@ public class TiketController : ControllerBase
             //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
             return Ok(resault);
         }catch (Exception ex) {
-            _logger.LogError(ex, "Ошибка при создании тикета. Payload: {@Model}", model);
+            _logger.LogError(ex, "Ошибка при создании тикета. Payload: {@Model}. StackTrace: {StackTrace}", model, ex.StackTrace);
             throw;
         }
     }
@@ -479,8 +479,11 @@ public class TiketController : ControllerBase
 
     private T GetOrFail<T>(UnitOfWork uow, int id, string entityName) where T : XPObject
     {
+        _logger.LogInformation("GetOrFail: ищем {EntityName} с Oid={Id}", entityName, id);
+
         var entity = uow.Query<T>().FirstOrDefault(e => e.Oid == id);
         if (entity == null)
+            _logger.LogWarning("GetOrFail: {EntityName} с Oid={Id} не найден", entityName, id);
             throw new KeyNotFoundException($"{entityName} не найден");
         return entity;
     }

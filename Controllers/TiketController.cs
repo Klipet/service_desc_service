@@ -59,34 +59,33 @@ public class TiketController : ControllerBase
         if (!HasPermission(PermisionConstant.TicketCreate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try{
-            using var uow = MyXPO.GetNewUnitOfWork();
             if (model == null) return BadRequest("Data is null");
             User user;
             if (model.UserId == 0)
             {
-                user = SettingTiket.GetUserRoundRobin(uow, workSpaceId: model.WorkSpaceId);
+                user = SettingTiket.GetUserRoundRobin(_uow, workSpaceId: model.WorkSpaceId);
                 _logger.LogInformation("user = {User}", user == null ? "NULL" : user.Oid.ToString());
             }
             else
             {
-                user = GetOrFail<User>(uow, model.UserId, "User");
+                user = GetOrFail<User>(_uow, model.UserId, "User");
             }
 
             //   var users = GetOrFail<User>(uow, model.UserId, "User");
-            var wp = GetOrFail<WorkSpace>(uow, model.WorkSpaceId, "WorkSpace");
-            var st = GetOrFail<State>(uow, model.StateId, "State");
-            var tt = GetOrFail<TiketType>(uow, model.TypeTiketId, "TiketType");
-            var pr = GetOrFail<Preority>(uow, model.PreorityId, "Preority");
-            var md = GetOrFail<Mode>(uow, model.ModeId, "Mode");
-            var sc = GetOrFail<SubCategory>(uow, model.SubCategoryId, "SubCategory");
-            var cat = GetOrFail<Category>(uow, model.CategoryId, "Category");
-            var au = GetOrFail<Author>(uow, model.AuthorId, "Author");
-            var pl = GetOrFail<Platform>(uow, model.PlatformId, "Platform");
-            var com = GetOrFail<Company>(uow, model.CompanyId, "Company");
+            var wp = GetOrFail<WorkSpace>(_uow, model.WorkSpaceId, "WorkSpace");
+            var st = GetOrFail<State>(_uow, model.StateId, "State");
+            var tt = GetOrFail<TiketType>(_uow, model.TypeTiketId, "TiketType");
+            var pr = GetOrFail<Preority>(_uow, model.PreorityId, "Preority");
+            var md = GetOrFail<Mode>(_uow, model.ModeId, "Mode");
+            var sc = GetOrFail<SubCategory>(_uow, model.SubCategoryId, "SubCategory");
+            var cat = GetOrFail<Category>(_uow, model.CategoryId, "Category");
+            var au = GetOrFail<Author>(_uow, model.AuthorId, "Author");
+            var pl = GetOrFail<Platform>(_uow, model.PlatformId, "Platform");
+            var com = GetOrFail<Company>(_uow, model.CompanyId, "Company");
 
 
 
-            var ticket = new Tiket(uow)
+            var ticket = new Tiket(_uow)
             {
                 Title = model.Title,
                 Description = model.Description,
@@ -112,7 +111,7 @@ public class TiketController : ControllerBase
             };
             try
             {
-                uow.CommitChanges();
+                _uow.CommitChanges();
 
 
             }
@@ -482,8 +481,10 @@ public class TiketController : ControllerBase
 
         var entity = uow.Query<T>().FirstOrDefault(e => e.Oid == id);
         if (entity == null)
+        {
             _logger.LogWarning("GetOrFail: {EntityName} с Oid={Id} не найден", entityName, id);
             throw new KeyNotFoundException($"{entityName} не найден");
+        }
         return entity;
     }
 

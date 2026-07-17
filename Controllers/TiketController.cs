@@ -60,6 +60,8 @@ public class TiketController : ControllerBase
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try{
             if (model == null) return BadRequest("Data is null");
+
+
             User user;
             if (model.UserId == 0)
             {

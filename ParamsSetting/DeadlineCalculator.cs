@@ -24,9 +24,10 @@ public class DeadlineCalculator
             current = current.AddHours(1);
 
             if (IsWorkingHour(current, holidays, schedule))
+            {
                 Console.WriteLine($"Working hour: {current}");
                 hoursLeft--;
-
+            }
             safetyCounter++;
 
             if (safetyCounter > 10000)

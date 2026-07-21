@@ -85,14 +85,26 @@ public class TotalTypeController : ControllerBase
                 }).ToList()
             }).ToList();
 
-        var tiketWorkSpace = _uow.Query<WorkSpace>()
+        var workSpaces = _uow.Query<WorkSpace>()
             .Where(t => t.Active)
-            .Select(t => new TotalTypeDto
+            .ToList();
+
+        var tiketWorkSpace = workSpaces
+            .Select(t => new 
             {
                 Oid = t.Oid,
                 Name = t.Name,
                 Active = t.Active,
                 DateCreated = t.DateCreated,
+                User = t.Users
+                    .Where(uw => uw.IsActive)
+                    .Select(uw => new TotalTypeDto
+                    {
+                        Oid = uw.Oid,
+                        Name = uw.Name,
+                        Active = uw.IsActive,
+                        DateCreated = uw.DateCreated,
+                    }).ToList()
             }).ToList();
 
         return Ok( new{

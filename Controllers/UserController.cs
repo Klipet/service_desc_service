@@ -46,7 +46,7 @@ public class UserController: ControllerBase
                 DateCreated = u.DateCreated,
                 WorkSpaceName = u.WorkSpace.Name,
                 WorkSpaceId = u.WorkSpace.Oid,
-                ApiKey = u.ApiKey,
+            //    ApiKey = u.ApiKey,
                 IsActive = u.IsActive
             }).ToList();
             return Ok(resault);
@@ -147,7 +147,7 @@ public class UserController: ControllerBase
         var user = _uow.GetObjectByKey<User>(id);
         if (user == null) return NotFound("User not found");
 
-        var wp = _uow.GetObjectByKey<WorkSpace>(user.WorkSpace);
+        var wp = _uow.GetObjectByKey<WorkSpace>(user.WorkSpace.Oid);
         if (wp == null)
             return NotFound("Пользователь не найден");
         try
@@ -164,7 +164,7 @@ public class UserController: ControllerBase
                 Loghin = user.Loghin,
                 WorkSpaceName = wp.Name,
                 DateCreated = user.DateCreated,
-                ApiKey = user.ApiKey,
+             //   ApiKey = user.ApiKey,
                 IsActive = user.IsActive,
 
             };

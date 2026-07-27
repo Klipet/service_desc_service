@@ -154,7 +154,6 @@ public class TiketFromEmail
             Author = autor,
             State = state,
             DataCreted = DateTime.Now,
-            ResaultPhone = false,
             BugTransfer = false,
             Mode = existMode,
             IsActive = true,
@@ -221,7 +220,7 @@ public class TiketFromEmail
 
                 CategoryName = tiket.Category != null ? tiket.Category.Name : string.Empty,
 
-                Phone = tiket.Phone ?? string.Empty,
+            //    Phone = tiket.Phone ?? string.Empty,
 
                 CompanyId = tiket.Company != null ? tiket.Company.Oid : 0,
                 CompanyName = tiket.Company != null ? tiket.Company.Name : string.Empty,
@@ -243,14 +242,14 @@ public class TiketFromEmail
 
                 PreorityName = tiket.Preorety != null ? tiket.Preorety.Name : string.Empty,
 
-                DataPhone = tiket.DataPhone,
-                ResaultPhone = tiket.ResaultPhone,
-                DateSecondPhone = tiket.DateSecondPhone,
+            //    DataPhone = tiket.DataPhone,
+            //    ResaultPhone = tiket.ResaultPhone,
+            //    DateSecondPhone = tiket.DateSecondPhone,
                 BugNumber = tiket.BugNumber ?? string.Empty,
                 BugTransfer = tiket.BugTransfer,
                 ModeName = tiket.Mode != null ? tiket.Mode.Name : string.Empty,
                 DataCreted = tiket.DataCreted,
-                DataModefire = tiket.DataModefire,
+            //    DataModefire = tiket.DataModefire,
                 DueDate = tiket.DueDate ?? DateTime.UtcNow,
 
                 // 📎 Файлы тикета

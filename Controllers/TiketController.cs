@@ -40,11 +40,13 @@ public class TiketController : ControllerBase
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
+           
             var result = _uow.Query<Tiket>()
                 .OrderBy(t => t.Oid)
                 .AsEnumerable()       // ✅ переходим в память для ToDto
                 .Select(ToDto)
                 .ToList();
+         
             return Ok(result);
         }
         catch (Exception ex)
@@ -93,7 +95,6 @@ public class TiketController : ControllerBase
                 Description = model.Description,
                 Author = au,
                 Category = cat,
-                Phone = model.Phone,
                 Company = com,
                 SubCategory = sc,
                 State = st,
@@ -102,9 +103,6 @@ public class TiketController : ControllerBase
                 WorkSpace = wp,
                 User = user,
                 Preorety = pr,
-                DataPhone = model.DataPhone ?? DateTime.MinValue,
-                ResaultPhone = model.ResaultPhone,
-                DateSecondPhone = model.DateSecondPhone ?? DateTime.MinValue,
                 BugNumber = model.BugNumber,
                 BugTransfer = model.BugTransfer,
                 Mode = md,
@@ -121,36 +119,8 @@ public class TiketController : ControllerBase
             {
                 return StatusCode(500, $"Error saving to database: {ex.Message}");
             }
-            var resault = new TiketResponseDto
-            {
-                Id = ticket.Oid,
-                Title = ticket.Title,
-                Description = ticket.Description,
-                AuthorName = au.Name,
-                AuthorId = au.Oid,
-                CategoryName = cat.Name,
-                Phone = ticket.Phone,
-                CompanyName = com.Name,
-                CompanyId = com.Oid,
-                SubCategoryName = sc.Name,
-                StateName = st.Name,
-                TypeTiketName = tt.Name,
-                PlatformName = pl.Name,
-                PlatformId = pl.Oid,
-                WorkSpaceName = ticket.WorkSpace.Name,
-                UserName = user.Name,
-                UserId = user.Oid,
-                PreorityName = pr.Name,
-                DataPhone = ticket.DataPhone,
-                ResaultPhone = ticket.ResaultPhone,
-                DateSecondPhone = ticket.DateSecondPhone,
-                BugNumber = ticket.BugNumber,
-                BugTransfer = ticket.BugTransfer,
-                ModeId = md.Oid,
-                ModeName = md.Name,
-                DataCreted = ticket.DataCreted,
-                DueDate = ticket.DueDate ?? DateTime.UtcNow,
-            };
+            var resault = ToDto(ticket);
+
             await _hub.Clients.All.SendAsync("NewTicketCreated", resault);
 
             //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
@@ -218,7 +188,6 @@ public class TiketController : ControllerBase
             tiket.Description = dto.Description;
             tiket.Author = au;
             tiket.Category = cat;
-            tiket.Phone = dto.Phone;
             tiket.Company = com;
             tiket.SubCategory = sc;
             tiket.State = st;
@@ -227,9 +196,6 @@ public class TiketController : ControllerBase
             tiket.WorkSpace = wp;
             tiket.User = user;
             tiket.Preorety = pr;
-            tiket.DataPhone = dto.DataPhone ?? DateTime.MinValue;
-            tiket.ResaultPhone = dto.ResaultPhone;
-            tiket.DateSecondPhone = dto.DateSecondPhone ?? DateTime.MinValue;
             tiket.BugNumber = dto.BugNumber;
             tiket.BugTransfer = dto.BugTransfer;
             tiket.Mode = md;
@@ -493,6 +459,7 @@ public class TiketController : ControllerBase
 
     private TiketResponseDto ToDto(Tiket t) => new TiketResponseDto
     {
+       
         Id = t.Oid,
         Title = t.Title ?? string.Empty,
         Description = t.Description ?? string.Empty,
@@ -500,7 +467,6 @@ public class TiketController : ControllerBase
         AuthorName = t.Author != null ? t.Author.Name : string.Empty,
         CategoryId = t.Category != null ? t.Category.Oid : 0,
         CategoryName = t.Category != null ? t.Category.Name : string.Empty,
-        Phone = t.Phone ?? string.Empty,
         CompanyId = t.Company != null ? t.Company.Oid : 0,
         CompanyName = t.Company != null ? t.Company.Name : string.Empty,
         SubCategoryId = t.SubCategory != null ? t.SubCategory.Oid : 0,
@@ -517,16 +483,26 @@ public class TiketController : ControllerBase
         UserName = t.User != null ? t.User.Name : string.Empty,
         PreorityId = t.Preorety != null ? t.Preorety.Oid : 0,
         PreorityName = t.Preorety != null ? t.Preorety.Name : string.Empty,
-        DataPhone = t.DataPhone,
-        ResaultPhone = t.ResaultPhone,
-        DateSecondPhone = t.DateSecondPhone,
         BugNumber = t.BugNumber ?? string.Empty,
         BugTransfer = t.BugTransfer,
         ModeId = t.Mode != null ? t.Mode.Oid : 0,
         ModeName = t.Mode != null ? t.Mode.Name : string.Empty,
         DataCreted = t.DataCreted,
-        DataModefire = t.DataModefire,
         DueDate = t.DueDate ?? DateTime.UtcNow,
+
+        Phones = t.Phones.Select(p => new TicketPhoneResponseDto
+        {
+            Id = p.Oid,
+            TicketId = p.Ticket.Oid != null ? p.Ticket.Oid : 0,
+            UserId = p.User != null ? p.User.Oid : 0,
+            UserName = p.User != null ? p.User.Name : string.Empty,
+            ResultPhoneName = p.PhoneResults != null ? p.PhoneResults.Name : string.Empty,
+            ResultPhoneOid = p.PhoneResults != null ? p.PhoneResults.Oid : 0,
+            Phone = p.Phone ?? string.Empty,
+            DataCreated = p.DataCreated,
+            IsActive = p.IsActive,
+            Comment = p.Comment ?? string.Empty
+        }).ToList(),
 
         Files = t.Files.Select(f => new TiketFileDto
         {

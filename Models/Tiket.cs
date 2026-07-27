@@ -16,10 +16,6 @@ public class Tiket : XPObject
     private Platform _platform;
     private WorkSpace _workSpace;
     private Preority _preority;
-    private string _phone;
-    private bool _resaultPhone;
-    private DateTime _dataPhone;
-    private DateTime _dateSecondPhone;
     private bool _bugTransfer;
     private string _bugNumber;
     private Mode _mode;
@@ -32,13 +28,23 @@ public class Tiket : XPObject
     private bool _isActive;
 
 
+
+    [Association("Ticket-Phones"), Aggregated]
+    public XPCollection<TicketPhone> Phones
+    {
+        get => GetCollection<TicketPhone>(nameof(Phones));
+    }
+
+
     public bool IsActive
     {
         get => _isActive;
         set => SetPropertyValue(nameof(IsActive), ref _isActive, value);
     }
+
     [Association("Tiket-TiketFiles")]
     public XPCollection<TiketFile> Files => GetCollection<TiketFile>(nameof(Files));
+
 
     [Association("Tiket-TiketMessages")]
     public XPCollection<TiketMessage> Messages
@@ -134,31 +140,7 @@ public class Tiket : XPObject
         }
 
     }
-    public string Phone
-    {
-        get => _phone;
-        set => SetPropertyValue(nameof(Phone), ref _phone, value);
-    }
-    public bool ResaultPhone
-    {
-        get => _resaultPhone;
-        set => SetPropertyValue(nameof(ResaultPhone), ref _resaultPhone, value);
-    }
-    public DateTime DataPhone
-    {
-        get => _dataPhone;
-        set => SetPropertyValue(nameof(DataPhone), ref _dataPhone, value);
-    }
-    public DateTime DataModefire
-    {
-        get => _dataModefire;
-        set => SetPropertyValue(nameof(DataPhone), ref _dataModefire, value);
-    }
-    public DateTime DateSecondPhone
-    {
-        get => _dateSecondPhone;
-        set => SetPropertyValue(nameof(DateSecondPhone), ref _dateSecondPhone, value);
-    }
+
     public bool BugTransfer
     {
         get => _bugTransfer;
@@ -217,10 +199,6 @@ public class Tiket : XPObject
             Platform = _platform,
             WorkSpace = _workSpace,
             Preority = _preority,
-            Phone = _phone,
-            ResaultPhone = _resaultPhone,
-            DataPhone = _dataPhone,
-            DateSecondPhone = _dateSecondPhone,
             BugTransfer = _bugTransfer,
             BugNumber = _bugNumber,
             Mode = _mode,

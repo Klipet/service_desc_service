@@ -58,6 +58,13 @@ public class EmptyDataDB
             
         }
 
+        if (!uow.Query<PhoneResult>().Any())
+        {
+            new PhoneResult(uow) { Name = "Занят", Active = true, DateCreated = DateTime.Now, };
+            new PhoneResult(uow) { Name = "Успешно", Active = true, DateCreated = DateTime.Now, };
+            new PhoneResult(uow) { Name = "Без ответа", Active = true, DateCreated = DateTime.Now, };
+        }
+
         if (!uow.Query<Platform>().Any())
         {
             new Platform(uow) { Name = "Нормальный" };

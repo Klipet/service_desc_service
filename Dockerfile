@@ -11,6 +11,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+ENV TZ=Europe/Chisinau
 
 USER $APP_UID
 

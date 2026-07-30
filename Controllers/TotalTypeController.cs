@@ -89,6 +89,17 @@ public class TotalTypeController : ControllerBase
             .Where(t => t.Active)
             .ToList();
 
+        var phoneResault = _uow.Query<PhoneResult>()
+            .Where(res => res.Active)
+            .Select(pr => new TotalTypeDto
+            {
+                Oid = pr.Oid,
+                Name = pr.Name,
+                Active = pr.Active,
+                DateCreated = pr.DateCreated,
+
+            }).ToList();
+
         var tiketWorkSpace = workSpaces
             .Select(t => new 
             {
@@ -113,7 +124,8 @@ public class TotalTypeController : ControllerBase
             tiketPreority,
             tiketMode,
             tiketCategory,
-            tiketWorkSpace
+            tiketWorkSpace,
+            phoneResault
         });
     }
 

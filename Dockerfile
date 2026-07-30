@@ -24,6 +24,10 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble-chiseled-extra AS final
 USER app
 WORKDIR /app
+ENV TZ=Europe/Chisinau
+
+USER $APP_UID
+
 COPY --from=build /app/publish .
 
 ENTRYPOINT ["dotnet", "ServiceDesk.dll"]

@@ -17,6 +17,23 @@ namespace ServiceDesk.Migrations
                 new State(uow) { Name = "Новая заявка" };
 
             }
+
+            if (!uow.Query<WorkSchedule>().Any())
+            {
+
+                new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+                new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Tuesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+                new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Wednesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+                new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Thursday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+                new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Friday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+                new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Saturday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = false };
+                new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Sunday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = false };
+
+            }
+            ;
+
+
+
             if (!uow.Query<Preority>().Any())
             {
                 new Preority(uow) { Name = "Низкий" };
@@ -39,24 +56,31 @@ namespace ServiceDesk.Migrations
 
             if (!uow.Query<SubCategory>().Any())
             {
-                new SubCategory(uow) { Name = "Счета", Active = true, Category = uow.GetObjectByKey<Category>(1) };
+                new SubCategory(uow) { Name = "Нормальный" };
 
             }
             if (!uow.Query<Category>().Any())
             {
-                new Category(uow) { Name = "Касса", Active = true };
+                new Category(uow) { Name = "Нормальный" };
 
             }
 
             if (!uow.Query<Author>().Any())
             {
-                new Author(uow) { Name = "Клиент тест", Active = true, Email = "test@example.com", Platform = uow.GetObjectByKey<Platform>(1) };
+                new Author(uow) { Name = "Нормальный" };
 
             }
             if (!uow.Query<User>().Any())
             {
                 new User(uow) { Name = "Admin", Loghin = "Admin", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin"), };
 
+            }
+
+            if (!uow.Query<PhoneResult>().Any())
+            {
+                new PhoneResult(uow) { Name = "Занят", Active = true, DateCreated = DateTime.Now, };
+                new PhoneResult(uow) { Name = "Успешно", Active = true, DateCreated = DateTime.Now, };
+                new PhoneResult(uow) { Name = "Без ответа", Active = true, DateCreated = DateTime.Now, };
             }
 
             if (!uow.Query<Platform>().Any())
@@ -81,6 +105,13 @@ namespace ServiceDesk.Migrations
             {
                 new Mode(uow) { Name = "Нормальный" };
 
+            }
+            if (!uow.Query<Phone>().Any())
+            {
+                new Phone(uow) { Number = "079000000" };
+                new Phone(uow) { DataCreated = DateTime.Now };
+                var author = uow.Query<Author>().FirstOrDefault(p => p.Oid == 1);
+                new Phone(uow) { Author = author };
             }
 
             if (!uow.Query<HolidayDay>().Any())

@@ -61,6 +61,7 @@ public class TiketController : ControllerBase
         if (!HasPermission(PermisionConstant.TicketCreate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try{
+            bool isEditing = model?.Id.HasValue == true && model?.Id.Value != 0;
             if (model == null) return BadRequest("Data is null");
 
 
@@ -89,43 +90,49 @@ public class TiketController : ControllerBase
 
 
 
-            var ticket = new Tiket(_uow)
+            Tiket ticket;
+            if (isEditing)
             {
-                Title = model.Title,
-                Description = model.Description,
-                Author = au,
-                Category = cat,
-                Company = com,
-                SubCategory = sc,
-                State = st,
-                TypeTiket = tt,
-                Platform = pl,
-                WorkSpace = wp,
-                User = user,
-                Preorety = pr,
-                BugNumber = model.BugNumber,
-                BugTransfer = model.BugTransfer,
-                Mode = md,
-                DataCreted = DateTime.UtcNow,
-                IsActive = model.IsActive
-            };
+                ticket = GetOrFail<Tiket>(_uow, model.Id.Value, "Tiket");
+            }
+            else
+            {
+                ticket = new Tiket(_uow)
+                {
+                    DataCreted = DateTime.UtcNow
+                };
+            }
+
+            ticket.Title = model.Title;
+            ticket.Description = model.Description;
+            ticket.Author = au;
+            ticket.Category = cat;
+            ticket.Company = com;
+            ticket.SubCategory = sc;
+            ticket.State = st;
+            ticket.TypeTiket = tt;
+            ticket.Platform = pl;
+            ticket.WorkSpace = wp;
+            ticket.User = user;
+            ticket.Preorety = pr;
+            ticket.BugNumber = model.BugNumber;
+            ticket.BugTransfer = model.BugTransfer;
+            ticket.Mode = md;
+            ticket.IsActive = model.IsActive;
+
             try
             {
                 _uow.CommitChanges();
-
-
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error saving to database: {ex.Message}");
             }
             var resault = ToDto(ticket);
-
-            await _hub.Clients.All.SendAsync("NewTicketCreated", resault);
-
-            //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
+            await _hub.Clients.All.SendAsync(isEditing ? "TicketUpdated" : "NewTicketCreated", resault);
             return Ok(resault);
-        }catch (Exception ex) {
+        }
+        catch (Exception ex) {
             _logger.LogError(ex, "Ошибка при создании тикета. Payload: {@Model}. StackTrace: {StackTrace}", model, ex.StackTrace);
             throw;
         }

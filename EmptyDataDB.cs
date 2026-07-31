@@ -16,6 +16,22 @@ public class EmptyDataDB
             new State(uow) { Name = "Новая заявка" };
             
         }
+
+        if (!uow.Query<WorkSchedule>().Any())
+        {
+
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = false };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = false };
+
+        };
+
+ 
+
         if (!uow.Query<Preority>().Any())
         {
             new Preority(uow) { Name = "Низкий" };

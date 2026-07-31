@@ -9,27 +9,47 @@ public class DeadlineCalculator
         _session = session;
     }
 
-    public DateTime Calculate( int deadlineHours)
+    public DateTime Calculate(int deadlineHours)
     {
         var holidays = GetHolidays();
         var schedule = GetSchedule();
 
+        // === ДИАГНОСТИКА ===
+        Console.WriteLine("=== Schedule ===");
+        foreach (var s in schedule)
+        {
+            Console.WriteLine($"{s.Key}: IsWorking={s.Value.IsWorkingDay}, {s.Value.StartTime} - {s.Value.EndTime}");
+        }
+
+        Console.WriteLine("=== Holidays ===");
+        foreach (var h in holidays)
+            Console.WriteLine(h);
+
+        Console.WriteLine($"Now: {DateTime.Now}");
+        // ==================
+
         var current = DateTime.Now;
         var hoursLeft = deadlineHours;
-
         int safetyCounter = 0;
 
         while (hoursLeft > 0)
         {
             current = current.AddHours(1);
 
-            if (IsWorkingHour(current, holidays, schedule))
+            bool isWorking = IsWorkingHour(current, holidays, schedule);
+
+            if (isWorking)
             {
-                Console.WriteLine($"Working hour: {current}");
+                Console.WriteLine($"Working: {current}");
                 hoursLeft--;
             }
-            safetyCounter++;
+            else
+            {
+                // Можно раскомментировать, чтобы видеть, почему пропускает
+                // Console.WriteLine($"Skip: {current}");
+            }
 
+            safetyCounter++;
             if (safetyCounter > 10000)
                 throw new Exception("Infinite loop detected in deadline calculation");
         }

@@ -122,6 +122,7 @@ public class PhoneController : ControllerBase
     {
         if (!HasPermission(PermisionConstant.AuthorUpdate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
         try
         {
             var phone = _uow.Query<Phone>().FirstOrDefault(p => p.Oid == dto.Oid);

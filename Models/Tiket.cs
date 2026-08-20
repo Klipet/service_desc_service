@@ -162,6 +162,11 @@ public class Tiket : XPObject
         get => _dataCreated;
         set => SetPropertyValue(nameof(DataCreted), ref _dataCreated, value);
     }
+    public DateTime DataModefire
+    {
+        get => _dataModefire;
+        set => SetPropertyValue(nameof(DataModefire), ref _dataModefire, value);
+    }
     public DateTime? DueDate
     {
         get => _dueDate;

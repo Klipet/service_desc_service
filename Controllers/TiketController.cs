@@ -118,6 +118,7 @@ public class TiketController : ControllerBase
             ticket.BugNumber = model.BugNumber;
             ticket.BugTransfer = model.BugTransfer;
             ticket.Mode = md;
+            ticket.DataModefire = DateTime.Now;
             ticket.IsActive = model.IsActive;
 
             try
@@ -206,6 +207,7 @@ public class TiketController : ControllerBase
             tiket.BugNumber = dto.BugNumber;
             tiket.BugTransfer = dto.BugTransfer;
             tiket.Mode = md;
+            tiket.DataModefire = DateTime.Now;
             tiket.DataCreted = dto.DataCreted;
             tiket.IsActive = dto.IsActive;
 
@@ -495,6 +497,7 @@ public class TiketController : ControllerBase
         ModeId = t.Mode != null ? t.Mode.Oid : 0,
         ModeName = t.Mode != null ? t.Mode.Name : string.Empty,
         DataCreted = t.DataCreted,
+        DataModefire = t.DataModefire,
         DueDate = t.DueDate ?? DateTime.UtcNow,
 
         Phones = t.Phones.Select(p => new TicketPhoneResponseDto

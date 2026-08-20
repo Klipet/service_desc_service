@@ -91,6 +91,32 @@ public class PhoneController : ControllerBase
         }
     }
 
+    [HttpGet("GetPhoneByticket")]
+    public IActionResult GetPhoneByticket([FromQuery] int ticketId  )
+    {
+        if (!HasPermission(PermisionConstant.AuthorRead))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+        try
+        {
+            var ticket = _uow.Query<Ticket>().FirstOrDefault(t => t.Oid == ticketId);
+            var result = _uow.Query<Phone>().Select(p => new PhoneDto
+            {
+                Oid = p.Oid,
+                Number = p.Number,
+                DataCreated = p.DataCreated,
+                DataModefire = p.DataModefire,
+                AuthorId = p.Author != null ? p.Author.Oid : 0,
+                AuthorName = p.Author != null ? p.Author.Name : string.Empty,
+            }).ToList();
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Ошибка при получении списка: {ex.Message}");
+        }
+    }
+
     [HttpPut("UpdatePhoneById")]
     public IActionResult Update([FromBody] PhoneDto dto)
     {

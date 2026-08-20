@@ -17,8 +17,6 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     --no-restore \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
-    -v quiet \
-    -clp:ErrorsOnly;Summary \
     /p:UseAppHost=false \
     /p:DebugType=none \
     /p:DebugSymbols=false

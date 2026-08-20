@@ -98,7 +98,6 @@ public class PhoneController : ControllerBase
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
-            var ticket = _uow.Query<Ticket>().FirstOrDefault(t => t.Oid == ticketId);
             var result = _uow.Query<Phone>().Select(p => new PhoneDto
             {
                 Oid = p.Oid,

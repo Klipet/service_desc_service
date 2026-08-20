@@ -16,7 +16,6 @@ public class EmptyDataDB
             new State(uow) { Name = "Новая заявка" };
             
         }
-
         if (!uow.Query<WorkSchedule>().Any())
         {
 

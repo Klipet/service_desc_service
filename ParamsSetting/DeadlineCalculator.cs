@@ -15,17 +15,17 @@ public class DeadlineCalculator
         var schedule = GetSchedule();
 
         // === ДИАГНОСТИКА ===
-        Console.WriteLine("=== Schedule ===");
-        foreach (var s in schedule)
-        {
-            Console.WriteLine($"{s.Key}: IsWorking={s.Value.IsWorkingDay}, {s.Value.StartTime} - {s.Value.EndTime}");
-        }
+    //    Console.WriteLine("=== Schedule ===");
+    //    foreach (var s in schedule)
+    //    {
+    //        Console.WriteLine($"{s.Key}: IsWorking={s.Value.IsWorkingDay}, {s.Value.StartTime} - {s.Value.EndTime}");
+    //    }
 
-        Console.WriteLine("=== Holidays ===");
-        foreach (var h in holidays)
-            Console.WriteLine(h);
+      //  Console.WriteLine("=== Holidays ===");
+    //    foreach (var h in holidays)
+    //        Console.WriteLine(h);
 
-        Console.WriteLine($"Now: {DateTime.Now}");
+     //   Console.WriteLine($"Now: {DateTime.Now}");
         // ==================
 
         var current = DateTime.Now;

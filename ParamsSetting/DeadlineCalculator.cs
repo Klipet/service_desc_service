@@ -26,6 +26,7 @@ public class DeadlineCalculator
 
             if (isWorking)
             {
+
                 Console.WriteLine($"Working: {current}");
                 hoursLeft--;
             }

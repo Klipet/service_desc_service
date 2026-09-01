@@ -33,39 +33,39 @@ public class SettingTiket
     }
     public static User GetUserRoundRobin(UnitOfWork uow, int workSpaceId, ILogger<TiketController> logger)
     {
-        logger.LogInformation("[RoundRobin] Старт подбора пользователя для WorkSpaceId: {WorkSpaceId}", workSpaceId);
+        logger.LogError("[RoundRobin] Старт подбора пользователя для WorkSpaceId: {WorkSpaceId}", workSpaceId);
         var users = uow.Query<User>()
             .Where(u => u.WorkSpace.Oid == workSpaceId)
             .OrderBy(u => u.Oid)
             .ToList();
-        logger.LogInformation("[RoundRobin] Найдено пользователей в воркспейсе {WorkSpaceId}: {Count}", workSpaceId, users.Count);
+        logger.LogError("[RoundRobin] Найдено пользователей в воркспейсе {WorkSpaceId}: {Count}", workSpaceId, users.Count);
         if (!users.Any())
         {
-            logger.LogWarning("[RoundRobin] Список пользователей для WorkSpaceId {WorkSpaceId} пуст! Возвращаем null.", workSpaceId);
+            logger.LogError("[RoundRobin] Список пользователей для WorkSpaceId {WorkSpaceId} пуст! Возвращаем null.", workSpaceId);
             return null;
         }
         var lastTicket = uow.Query<Tiket>()
             .Where(t => t.WorkSpace.Oid == workSpaceId) // только в этом воркспейсе
             .OrderByDescending(t => t.Oid)
             .FirstOrDefault();
-
+        
         // Если тикетов ещё нет — назначаем первого
         if (lastTicket == null)
         {
             var firstUser = users.First();
-            logger.LogInformation("[RoundRobin] Предыдущие тикеты не найдены. Назначаем первого пользователя: {UserOid} ({UserName})",
+            logger.LogError("[RoundRobin] Предыдущие тикеты не найдены. Назначаем первого пользователя: {UserOid} ({UserName})",
                 firstUser.Oid, firstUser.Name);
             return firstUser;
         }
 
         int? lastUserOid = lastTicket.User?.Oid;
-        logger.LogInformation("[RoundRobin] Последний тикет ID: {TicketOid}. Закрепленный за ним User ID: {LastUserOid}",
+        logger.LogError("[RoundRobin] Последний тикет ID: {TicketOid}. Закрепленный за ним User ID: {LastUserOid}",
             lastTicket.Oid, lastUserOid.HasValue ? lastUserOid.Value.ToString() : "NULL");
 
         if (lastUserOid == null)
         {
             var firstUser = users.First();
-            logger.LogInformation("[RoundRobin] У последнего тикета не был указан пользователь. Назначаем первого из списка: {UserOid} ({UserName})",
+            logger.LogError("[RoundRobin] У последнего тикета не был указан пользователь. Назначаем первого из списка: {UserOid} ({UserName})",
                 firstUser.Oid, firstUser.Name);
             return firstUser;
         }
@@ -78,7 +78,7 @@ public class SettingTiket
 
         var nextIndex = (lastIndex + 1) % users.Count;
         var user = users[nextIndex];
-        logger.LogInformation("[RoundRobin] Успешно распределено по кругу. Индекс предыдущего: {LastIndex}, Индекс нового: {NextIndex}. Назначен: {UserOid} ({UserName})",
+        logger.LogError("[RoundRobin] Успешно распределено по кругу. Индекс предыдущего: {LastIndex}, Индекс нового: {NextIndex}. Назначен: {UserOid} ({UserName})",
         lastIndex, nextIndex, user.Oid, user.Name);
         return user;
     }

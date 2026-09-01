@@ -99,6 +99,7 @@ public class TiketController : ControllerBase
             {
                 ticket = new Tiket(_uow)
                 {
+
                     DataCreted = DateTime.UtcNow
                 };
             }

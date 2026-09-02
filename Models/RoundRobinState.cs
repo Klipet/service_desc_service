@@ -8,7 +8,6 @@ public class RoundRobinState : XPObject
     private WorkSpace _workSpace;
     private User _lastAssignedUser;
 
-    [Association("WorkSpace-RoundRobinStates")]
     public WorkSpace WorkSpace
     {
         get => _workSpace;

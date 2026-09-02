@@ -32,46 +32,74 @@ public class SettingTiket
     {
         Console.WriteLine($"[RoundRobin] Старт подбора пользователя для WorkSpaceId: {workSpaceId}");
 
-        var users = uow.Query<User>()
-            .Where(u => u.WorkSpace.Oid == workSpaceId)
-            .OrderBy(u => u.Oid)
-            .ToList();
-
-        Console.WriteLine($"[RoundRobin] Найдено пользователей в воркспейсе {workSpaceId}: {users.Count}");
-
-        if (!users.Any())
+        uow.BeginTransaction();
         {
-            Console.WriteLine($"[RoundRobin] Список пользователей для WorkSpaceId {workSpaceId} пуст! Возвращаем null.");
-            return null;
+            try
+            {
+                var workSpace = uow.GetObjectByKey<WorkSpace>(workSpaceId);
+                if (workSpace == null)
+                {
+                    Console.WriteLine($"[RoundRobin] WorkSpace {workSpaceId} не найден.");
+                    uow.RollbackTransaction();
+                    return null;
+                }
+
+                // Ищем состояние курсора для этого воркспейса
+                var state = uow.Query<RoundRobinState>()
+                    .FirstOrDefault(s => s.WorkSpace.Oid == workSpaceId);
+
+                if (state == null)
+                {
+                    Console.WriteLine($"[RoundRobin] Состояние для WorkSpaceId {workSpaceId} не найдено, создаём новое.");
+                    state = new RoundRobinState(uow) { WorkSpace = workSpace };
+                    state.Save();
+                }
+
+                var users = uow.Query<User>()
+                    .Where(u => u.WorkSpace.Oid == workSpaceId)
+                    .OrderBy(u => u.Oid)
+                    .ToList();
+
+                Console.WriteLine($"[RoundRobin] Найдено пользователей в воркспейсе {workSpaceId}: {users.Count}");
+
+                if (!users.Any())
+                {
+                    Console.WriteLine($"[RoundRobin] Список пользователей пуст! Возвращаем null.");
+                    uow.RollbackTransaction();
+                    return null;
+                }
+
+                User selected;
+                var lastUserOid = state.LastAssignedUser?.Oid;
+
+                if (lastUserOid == null)
+                {
+                    selected = users.First();
+                    Console.WriteLine($"[RoundRobin] Курсор пуст. Назначаем первого: {selected.Oid} ({selected.Name})");
+                }
+                else
+                {
+                    var lastIndex = users.FindIndex(u => u.Oid == lastUserOid);
+                    var nextIndex = (lastIndex == -1) ? 0 : (lastIndex + 1) % users.Count;
+                    selected = users[nextIndex];
+                    Console.WriteLine($"[RoundRobin] Индекс предыдущего: {lastIndex}, индекс нового: {nextIndex}. Назначен: {selected.Oid} ({selected.Name})");
+                }
+
+                // Обновляем курсор и сохраняем в той же транзакции
+                state.LastAssignedUser = selected;
+                state.Save();
+
+                uow.CommitTransaction();
+                Console.WriteLine($"[RoundRobin] Курсор обновлён, транзакция закоммичена.");
+                return selected;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RoundRobin] Ошибка: {ex.Message}. Откат транзакции.");
+                uow.RollbackTransaction();
+                throw;
+            }
         }
-
-        var lastTicket = uow.Query<Tiket>()
-            .Where(t => t.WorkSpace.Oid == workSpaceId && t.User != null)
-            .OrderByDescending(t => t.Oid)
-            .FirstOrDefault();
-
-        if (lastTicket == null)
-        {
-            var firstUser = users.First();
-            Console.WriteLine($"[RoundRobin] Предыдущие тикеты не найдены. Назначаем первого пользователя: {firstUser.Oid} ({firstUser.Name})");
-            return firstUser;
-        }
-
-        int? lastUserOid = lastTicket.User?.Oid;
-        Console.WriteLine($"[RoundRobin] Последний тикет ID: {lastTicket.Oid}. Закреплённый за ним User ID: {(lastUserOid.HasValue ? lastUserOid.Value.ToString() : "NULL")}");
-
-        var lastIndex = users.FindIndex(u => u.Oid == lastUserOid);
-        if (lastIndex == -1)
-        {
-            var firstUser = users.First();
-            Console.WriteLine($"[RoundRobin] Пользователь последнего тикета не найден в списке. Назначаем первого: {firstUser.Oid} ({firstUser.Name})");
-            return firstUser;
-        }
-
-        var nextIndex = (lastIndex + 1) % users.Count;
-        var user = users[nextIndex];
-
-        Console.WriteLine($"[RoundRobin] Успешно распределено по кругу. Индекс предыдущего: {lastIndex}, Индекс нового: {nextIndex}. Назначен: {user.Oid} ({user.Name})");
-        return user;
     }
+
 }

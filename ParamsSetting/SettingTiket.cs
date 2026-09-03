@@ -30,75 +30,98 @@ public class SettingTiket
 
     public static User GetUserRoundRobin(UnitOfWork uow, int workSpaceId)
     {
-        Console.WriteLine($"[RoundRobin] Старт подбора пользователя для WorkSpaceId: {workSpaceId}");
-
         uow.BeginTransaction();
+        try
         {
-            try
+            var workSpace = uow.GetObjectByKey<WorkSpace>(workSpaceId);
+            if (workSpace == null)
             {
-                var workSpace = uow.GetObjectByKey<WorkSpace>(workSpaceId);
-                if (workSpace == null)
+                uow.RollbackTransaction();
+                return null;
+            }
+
+            var state = uow.Query<RoundRobinState>()
+                .FirstOrDefault(s => s.WorkSpace.Oid == workSpaceId);
+
+            if (state == null)
+            {
+                state = new RoundRobinState(uow) { WorkSpace = workSpace };
+                state.Save();
+                uow.CommitChanges();
+            }
+
+            uow.ExecuteQuery(
+                "SELECT \"Oid\" FROM \"RoundRobinState\" WHERE \"Oid\" = @p1 FOR UPDATE",
+                new object[] { state.Oid });
+
+            state.Reload();
+
+            var users = uow.Query<User>()
+                .Where(u => u.WorkSpace.Oid == workSpaceId && u.IsActive)
+                .OrderBy(u => u.Oid)
+                .ToList();
+
+            if (!users.Any())
+            {
+                uow.RollbackTransaction();
+                return null;
+            }
+
+            // Считаем тикеты, созданные сегодня, по каждому сотруднику воркспейса
+            var todayStart = DateTime.Today;
+            var todayEnd = todayStart.AddDays(1);
+
+            var todayLoad = uow.Query<Tiket>()
+                .Where(t => t.User != null
+                         && t.User.WorkSpace.Oid == workSpaceId
+                         && t.DataCreted >= todayStart
+                         && t.DataCreted < todayEnd)
+                .GroupBy(t => t.User.Oid)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionary(x => x.UserId, x => x.Count);
+
+            int Load(User u) => todayLoad.TryGetValue(u.Oid, out var c) ? c : 0;
+
+            var minLoad = users.Min(Load);
+            // Кандидаты — только те, у кого сегодня минимум заявок.
+            // Round-robin работает уже внутри этой группы, а не по всем users,
+            // иначе сотрудник с 0 заявками мог бы пропускаться курсором.
+            var candidates = users.Where(u => Load(u) == minLoad).ToList();
+
+            User selected;
+            var lastUserOid = state.LastAssignedUser?.Oid;
+
+            if (lastUserOid == null)
+            {
+                selected = candidates.First();
+            }
+            else
+            {
+                var lastIndexInCandidates = candidates.FindIndex(u => u.Oid == lastUserOid);
+
+                if (lastIndexInCandidates == -1)
                 {
-                    Console.WriteLine($"[RoundRobin] WorkSpace {workSpaceId} не найден.");
-                    uow.RollbackTransaction();
-                    return null;
-                }
-
-                // Ищем состояние курсора для этого воркспейса
-                var state = uow.Query<RoundRobinState>()
-                    .FirstOrDefault(s => s.WorkSpace.Oid == workSpaceId);
-
-                if (state == null)
-                {
-                    Console.WriteLine($"[RoundRobin] Состояние для WorkSpaceId {workSpaceId} не найдено, создаём новое.");
-                    state = new RoundRobinState(uow) { WorkSpace = workSpace };
-                    state.Save();
-                }
-
-                var users = uow.Query<User>()
-                    .Where(u => u.WorkSpace.Oid == workSpaceId)
-                    .OrderBy(u => u.Oid)
-                    .ToList();
-
-                Console.WriteLine($"[RoundRobin] Найдено пользователей в воркспейсе {workSpaceId}: {users.Count}");
-
-                if (!users.Any())
-                {
-                    Console.WriteLine($"[RoundRobin] Список пользователей пуст! Возвращаем null.");
-                    uow.RollbackTransaction();
-                    return null;
-                }
-
-                User selected;
-                var lastUserOid = state.LastAssignedUser?.Oid;
-
-                if (lastUserOid == null)
-                {
-                    selected = users.First();
-                    Console.WriteLine($"[RoundRobin] Курсор пуст. Назначаем первого: {selected.Oid} ({selected.Name})");
+                    // Последний назначенный не входит в группу с минимальной нагрузкой
+                    // (у него уже больше заявок, чем у остальных) — просто берём первого кандидата
+                    selected = candidates.First();
                 }
                 else
                 {
-                    var lastIndex = users.FindIndex(u => u.Oid == lastUserOid);
-                    var nextIndex = (lastIndex == -1) ? 0 : (lastIndex + 1) % users.Count;
-                    selected = users[nextIndex];
-                    Console.WriteLine($"[RoundRobin] Индекс предыдущего: {lastIndex}, индекс нового: {nextIndex}. Назначен: {selected.Oid} ({selected.Name})");
+                    var nextIndex = (lastIndexInCandidates + 1) % candidates.Count;
+                    selected = candidates[nextIndex];
                 }
-
-                // Обновляем курсор и сохраняем в той же транзакции
-                state.LastAssignedUser = selected;
-                state.Save();
-
-                uow.CommitTransaction();
-                Console.WriteLine($"[RoundRobin] Курсор обновлён, транзакция закоммичена.");
-                return selected;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[RoundRobin] Ошибка: {ex.Message}. Откат транзакции.");
-                uow.RollbackTransaction();
-                throw;
-            }
+
+            state.LastAssignedUser = selected;
+            state.Save();
+            uow.CommitTransaction();
+
+            return selected;
+        }
+        catch
+        {
+            uow.RollbackTransaction();
+            throw;
         }
     }
 

@@ -3,3 +3,8 @@
     public string companyName { get; set; }
     public int companyId { get; set; }
 }
+
+public class PlatformPostDto : BaseDto
+{
+    public int companyId { get; set; }
+}

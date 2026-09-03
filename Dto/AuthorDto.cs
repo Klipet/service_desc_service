@@ -10,7 +10,7 @@
 
 public class AuthorPostDto : BaseDto
 {
-    public string PhoneOid { get; set; }
+    public List<PhoneDtoAuthor> Phone { get; set; }
     public string Email { get; set; }
     public int PlatformId { get; set; }
 }

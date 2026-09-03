@@ -59,7 +59,7 @@ public class AuthorController : ControllerBase
     }
 
     [HttpPost("Create[controller]")]
-    public IActionResult Create([FromBody] AuthorDto model)
+    public IActionResult Create([FromBody] AuthorPostDto model)
     {
         if (!HasPermission(PermisionConstant.AuthorCreate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });

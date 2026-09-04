@@ -17,23 +17,34 @@ public class Program
 
 
             var core = new Core(builder.Configuration);
-            if (args.Contains("--migrate"))
-            {
-                var connectionString = new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json", optional: true)
-                    .AddEnvironmentVariables()
-                    .Build()
-                    .GetConnectionString("DefaultConnection")
-                    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
+            // if (args.Contains("--migrate"))
+            // {
+            //     var connectionString = new ConfigurationBuilder()
+            //         .AddJsonFile("appsettings.json", optional: true)
+            //         .AddEnvironmentVariables()
+            //         .Build()
+            //         .GetConnectionString("DefaultConnection")
+            //         ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
+            //
+            //     MyXPO.ConnectionString = connectionString;
+            //     MyXPO.UpdateDataBase();
+            //     Console.WriteLine("[Migrator] Schema updated.");
+            //     var runner = new MigrationRunner();
+            //     runner.Run();
+            //     Console.WriteLine("[Migrator] Done.");
+            //     return;
+            // }
 
-                MyXPO.ConnectionString = connectionString;
-                MyXPO.UpdateDataBase();
-                Console.WriteLine("[Migrator] Schema updated.");
-                var runner = new MigrationRunner();
-                runner.Run();
-                Console.WriteLine("[Migrator] Done.");
-                return;
-            }
+            var connectionString = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build()
+                .GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
+
+            MyXPO.ConnectionString = connectionString;
+            MyXPO.UpdateDataBase();
+            Console.WriteLine("[Migrator] Schema updated.");
 
             core.InitializeConnection();
 

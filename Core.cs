@@ -19,11 +19,11 @@ public class Core
         {
             MyXPO.ConnectionString = connectionString;
 
-            if (!UpdatedDatabase)
-            {
-                MyXPO.UpdateDataBase();
-                UpdatedDatabase = true;
-            }
+            // if (!UpdatedDatabase)
+            // {
+            //     MyXPO.UpdateDataBase();
+            //     UpdatedDatabase = true;
+            // }
 
             // Запускаем миграции
             var runner = new MigrationRunner();

@@ -51,7 +51,7 @@ public class SettingTiket
             }
 
             uow.ExecuteQuery(
-                "SELECT \"Oid\" FROM \"RoundRobinState\" WHERE \"Oid\" = @p1 FOR UPDATE",
+                "SELECT \"OID\" FROM \"RoundRobinState\" WHERE \"OID\" = @p1 FOR UPDATE",
                 new object[] { state.Oid });
 
             state.Reload();

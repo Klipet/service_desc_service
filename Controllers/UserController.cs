@@ -124,7 +124,8 @@ public class UserController: ControllerBase
             user.Email = userModel.Email;
             user.FirstName = userModel.FirstName;
             user.Phone = userModel.Phone;
-            user.PasswordHash = userModel.Password;
+            if (!string.IsNullOrEmpty(userModel.Password))
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userModel.Password);
             user.Loghin = userModel.Loghin;
             user.WorkSpace = wp;
             user.IsActive = userModel.IsActive;

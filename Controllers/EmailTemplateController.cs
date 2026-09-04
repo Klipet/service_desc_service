@@ -51,6 +51,37 @@ public class EmailTemplateController : ControllerBase
         }
     }
 
+    [HttpPut("UpdateTemplate")]
+    public IActionResult Update([FromQuery] int id, [FromBody] EmailTemplateDto model)
+    {
+        if (!HasPermission(PermisionConstant.EmailTemplateUpdate))
+            return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+
+        if (model == null) return BadRequest("Data is null");
+
+        try
+        {
+            var template = _uow.Query<EmailTemplate>().FirstOrDefault(t => t.Oid == id);
+            if (template == null) return NotFound($"Template {id} не найден");
+
+            var state = _uow.Query<State>().FirstOrDefault(s => s.Oid == model.StateOid) ??
+                throw new KeyNotFoundException("State не найден");
+
+            template.SubjectTemplate = model.SubjectTemplate;
+            template.BodyHtmlTemplate = model.BodyHtmlTemplate;
+            template.IsActive = model.IsActive;
+            template.IsHtml = model.IsHtml;
+            template.State = state;
+            _uow.CommitChanges();
+
+            return Ok(new { Oid = template.Oid });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Ошибка при обновлении: {ex.Message}");
+        }
+    }
+
     [HttpGet("GetAllTemplate")]
     public IActionResult GetAll() 
     {

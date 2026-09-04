@@ -129,10 +129,14 @@ public class Tiket : XPObject
         get => _preority;
         set
         {
+            var oldPreorityOid = _preority?.Oid;
             SetPropertyValue(nameof(Preorety), ref _preority, value);
 
-            // При выборе приоритета — автоматически считаем DueDate
-            if (_preority != null)
+            // DueDate пересчитываем, только если приоритет реально сменился
+            // (или задаётся впервые). На последующих редактированиях тикета
+            // Preorety переприсваивается всегда (см. TiketController.Update)
+            // тем же значением — в этом случае дедлайн трогать нельзя.
+            if (_preority != null && _preority.Oid != oldPreorityOid)
             {
                 var calculator = new DeadlineCalculator(Session);
                 DueDate = calculator.Calculate(_preority.DeadlineHours);

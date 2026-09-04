@@ -2,6 +2,32 @@
 
 public class SettingTiket
 {
+    // Сериализует round-robin назначение по workSpaceId в рамках одного
+    // процесса API: без этого два параллельных запроса могут прочитать
+    // одинаковый LastAssignedUser и назначить заявку одному и тому же
+    // сотруднику вместо чередования. Раньше это пытались лочить на уровне БД
+    // (SELECT ... FOR UPDATE / pg_advisory_xact_lock) — оба варианта упали на
+    // особенностях биндинга параметров в XPO ExecuteQuery, поэтому лочим
+    // здесь, в памяти. Работает только если API крутится одним процессом
+    // (нет горизонтального масштабирования на несколько инстансов) —
+    // при масштабировании на несколько подов/процессов нужен будет
+    // распределённый лок (Redis и т.п.).
+    private static readonly object _roundRobinLockRoot = new();
+    private static readonly Dictionary<int, object> _roundRobinLocks = new();
+
+    private static object GetRoundRobinLock(int workSpaceId)
+    {
+        lock (_roundRobinLockRoot)
+        {
+            if (!_roundRobinLocks.TryGetValue(workSpaceId, out var lockObj))
+            {
+                lockObj = new object();
+                _roundRobinLocks[workSpaceId] = lockObj;
+            }
+            return lockObj;
+        }
+    }
+
     public static User GetUserByLoad(UnitOfWork uow, int workSpaceId)
     {
         var users = uow.Query<User>()
@@ -30,6 +56,8 @@ public class SettingTiket
 
     public static User GetUserRoundRobin(UnitOfWork uow, int workSpaceId)
     {
+        lock (GetRoundRobinLock(workSpaceId))
+        {
         uow.BeginTransaction();
         try
         {
@@ -49,14 +77,6 @@ public class SettingTiket
                 state.Save();
                 uow.CommitChanges();
             }
-
-            uow.ExecuteQuery(
-                "SELECT \"OID\" FROM \"RoundRobinState\" WHERE \"OID\" = @p1 FOR UPDATE",
-                new object[] { state.Oid });
-
-
-
-            state.Reload();
 
             var users = uow.Query<User>()
                 .Where(u => u.WorkSpace.Oid == workSpaceId && u.IsActive)
@@ -124,6 +144,7 @@ public class SettingTiket
         {
             uow.RollbackTransaction();
             throw;
+        }
         }
     }
 }

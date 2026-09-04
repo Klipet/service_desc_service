@@ -54,6 +54,8 @@ public class SettingTiket
                 "SELECT \"OID\" FROM \"RoundRobinState\" WHERE \"OID\" = @p1 FOR UPDATE",
                 new object[] { state.Oid });
 
+
+
             state.Reload();
 
             var users = uow.Query<User>()

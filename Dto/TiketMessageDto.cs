@@ -5,7 +5,7 @@
     public int Author { get; set; }
     public int User { get; set; }
     public bool IsUser { get; set; }
-    public string MailMessageId { get; set; }
+    public string? MailMessageId { get; set; }
     public string MessageText { get; set; }
     public List<string> Email { get; set; } = new List<string>();
     public DateTime CreatedAt { get; set; }

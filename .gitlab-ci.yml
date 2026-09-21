@@ -1,0 +1,10 @@
+include:
+  - project: "eservicii/devops/ci-templates"
+    file: "pipelines/main.yml"
+    ref: "main"
+
+variables:
+  IMAGE_NAME: "servicedesk"
+  DOCKERFILE_PATH: "Dockerfile"
+  OVERRIDE_TAG_DEV: "latest"
+#  KUSTOMIZE_PATH:

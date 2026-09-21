@@ -50,7 +50,7 @@ public class PlatformController: ControllerBase
     }
 
     [HttpPost("New[controller]")]
-    public IActionResult Create([FromBody] PlatformDto model)
+    public IActionResult Create([FromBody] PlatformPostDto model)
     {
         if (!HasPermission(PermisionConstant.PlatformCreate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });

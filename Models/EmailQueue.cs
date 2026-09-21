@@ -14,6 +14,7 @@ public class EmailQueue: XPObject
     private bool _isHtml;
     private int _retryCount;
     private DateTime _lastAttemptAt;
+    private string _messageIdHeader;
 
     public string To
     {
@@ -75,5 +76,25 @@ public class EmailQueue: XPObject
     {
         get => _errorMessage;
         set => SetPropertyValue(nameof(ErrorMessage), ref _errorMessage, value);
+    }
+
+    // Message-ID, под которым письмо реально уйдёт по SMTP. Совпадает с
+    // Tiket.MessageId для самого первого письма по тикету (якорь треда).
+    public string MessageIdHeader
+    {
+        get => _messageIdHeader;
+        set => SetPropertyValue(nameof(MessageIdHeader), ref _messageIdHeader, value);
+    }
+
+    // Якорь треда (Tiket.MessageId) для писем, отправленных ПОСЛЕ первого.
+    // Идёт в заголовки References/In-Reply-To, чтобы ответ клиента на любое
+    // письмо этого тикета сохранял якорь в своих References — тогда
+    // TiketFromEmail.CreateTiketFromEmail находит существующий тикет вместо
+    // создания нового. Пусто для самого первого письма — там нет предка.
+    private string _threadAnchorId;
+    public string ThreadAnchorId
+    {
+        get => _threadAnchorId;
+        set => SetPropertyValue(nameof(ThreadAnchorId), ref _threadAnchorId, value);
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore.Internal;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using static DevExpress.Data.Helpers.ExpressiveSortInfo;
 
@@ -16,10 +17,12 @@ public class TiketController : ControllerBase
 {
     private readonly IHubContext<TicketHub> _hub;
     private readonly UnitOfWork _uow;
-    public TiketController(UnitOfWork uow, IHubContext<TicketHub> hub)
+    private readonly ILogger<TiketController> _logger;
+    public TiketController(UnitOfWork uow, IHubContext<TicketHub> hub, ILogger<TiketController> logger)
     {
         _uow = uow;
         _hub = hub;
+        _logger = logger;
     }
 
     private User CurrentUser => (User)HttpContext.Items["CurrentUser"]!;
@@ -37,11 +40,13 @@ public class TiketController : ControllerBase
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
         try
         {
+           
             var result = _uow.Query<Tiket>()
                 .OrderBy(t => t.Oid)
                 .AsEnumerable()       // ✅ переходим в память для ToDto
                 .Select(ToDto)
                 .ToList();
+         
             return Ok(result);
         }
         catch (Exception ex)
@@ -55,103 +60,97 @@ public class TiketController : ControllerBase
     {
         if (!HasPermission(PermisionConstant.TicketCreate))
             return StatusCode(403, new { error = "Access denied", errorCode = 403 });
+        try{
+            bool isEditing = model?.Id.HasValue == true && model?.Id.Value != 0;
+            if (model == null) return BadRequest("Data is null");
 
-        using var uow = MyXPO.GetNewUnitOfWork();
-        if (model == null) return BadRequest("Data is null");
-        User user;
-        if (model.UserId == 0)
-        {
-            user = SettingTiket.GetUserRoundRobin(uow, workSpaceId: model.WorkSpaceId);
 
-            Console.WriteLine($"userId = {user.Oid}");
+            User user;
+            if (model.UserId == 0)
+            {
+                user = SettingTiket.GetUserRoundRobin(uow: _uow, workSpaceId: model.WorkSpaceId);
+                _logger.LogInformation("user = {User}", user == null ? "NULL" : user.Oid.ToString());
+            }
+            else
+            {
+                user = GetOrFail<User>(_uow, model.UserId, "User");
+            }
+
+            //   var users = GetOrFail<User>(uow, model.UserId, "User");
+            var wp = GetOrFail<WorkSpace>(_uow, model.WorkSpaceId, "WorkSpace");
+            var st = GetOrFail<State>(_uow, model.StateId, "State");
+            var tt = GetOrFail<TiketType>(_uow, model.TypeTiketId, "TiketType");
+            var pr = GetOrFail<Preority>(_uow, model.PreorityId, "Preority");
+            var md = GetOrFail<Mode>(_uow, model.ModeId, "Mode");
+            var sc = GetOrFail<SubCategory>(_uow, model.SubCategoryId, "SubCategory");
+            var cat = GetOrFail<Category>(_uow, model.CategoryId, "Category");
+            var au = GetOrFail<Author>(_uow, model.AuthorId, "Author");
+            var pl = GetOrFail<Platform>(_uow, model.PlatformId, "Platform");
+            var com = GetOrFail<Company>(_uow, model.CompanyId, "Company");
+
+
+
+            Tiket ticket;
+            if (isEditing)
+            {
+                ticket = GetOrFail<Tiket>(_uow, model.Id.Value, "Tiket");
+            }
+            else
+            {
+                ticket = new Tiket(_uow)
+                {
+
+                    DataCreted = DateTime.UtcNow
+                };
+            }
+
+            ticket.Title = model.Title;
+            ticket.Description = model.Description;
+            ticket.Author = au;
+            ticket.Category = cat;
+            ticket.Company = com;
+            ticket.SubCategory = sc;
+            ticket.State = st;
+            ticket.TypeTiket = tt;
+            ticket.Platform = pl;
+            ticket.WorkSpace = wp;
+            ticket.User = user;
+            ticket.Preorety = pr;
+            ticket.BugNumber = model.BugNumber;
+            ticket.BugTransfer = model.BugTransfer;
+            ticket.Mode = md;
+            ticket.DataModefire = DateTime.Now;
+            ticket.IsActive = model.IsActive;
+
+            try
+            {
+                _uow.CommitChanges();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error saving to database: {ex.Message}");
+            }
+
+            if (!isEditing)
+            {
+                try
+                {
+                    new EmailQueueService(_uow).EnqueueTicketAnswer(ticket, user, ticket.Description, new List<string>());
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Не удалось поставить письмо в очередь для тикета {Id}", ticket.Oid);
+                }
+            }
+
+            var resault = ToDto(ticket);
+            await _hub.Clients.All.SendAsync(isEditing ? "TicketUpdated" : "NewTicketCreated", resault);
+            return Ok(resault);
         }
-        else
-        {
-            user = GetOrFail<User>(uow, model.UserId, "User");
+        catch (Exception ex) {
+            _logger.LogError(ex, "Ошибка при создании тикета. Payload: {@Model}. StackTrace: {StackTrace}", model, ex.StackTrace);
+            throw;
         }
-
-        //   var users = GetOrFail<User>(uow, model.UserId, "User");
-        var wp = GetOrFail<WorkSpace>(uow, model.WorkSpaceId, "WorkSpace");
-        var st = GetOrFail<State>(uow, model.StateId, "State");
-        var tt = GetOrFail<TiketType>(uow, model.TypeTiketId, "TiketType");
-        var pr = GetOrFail<Preority>(uow, model.PreorityId, "Preority");
-        var md = GetOrFail<Mode>(uow, model.ModeId, "Mode");
-        var sc = GetOrFail<SubCategory>(uow, model.SubCategoryId, "SubCategory");
-        var cat = GetOrFail<Category>(uow, model.CategoryId, "Category");
-        var au = GetOrFail<Author>(uow, model.AuthorId, "Author");
-        var pl = GetOrFail<Platform>(uow, model.PlatformId, "Platform");
-        var com = GetOrFail<Company>(uow, model.CompanyId, "Company");
-
-
-
-        var ticket = new Tiket(uow)
-        {
-            Title = model.Title,
-            Description = model.Description,
-            Author = au,
-            Category = cat,
-            Phone = model.Phone,
-            Company = com,
-            SubCategory = sc,
-            State = st,
-            TypeTiket = tt,
-            Platform = pl,
-            WorkSpace = wp,
-            User = user,
-            Preorety = pr,
-            DataPhone = model.DataPhone,
-            ResaultPhone = model.ResaultPhone,
-            DateSecondPhone = model.DateSecondPhone,
-            BugNumber = model.BugNumber,
-            BugTransfer = model.BugTransfer,
-            Mode = md,
-            DataCreted = DateTime.UtcNow,
-            IsActive = model.IsActive
-        };
-        try
-        {
-            uow.CommitChanges();
-
-
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error saving to database: {ex.Message}");
-        }
-        var resault = new TiketResponseDto
-        {
-            Id = ticket.Oid,
-            Title = ticket.Title,
-            Description = ticket.Description,
-            AuthorName = au.Name,
-            AuthorId = au.Oid,
-            CategoryName = cat.Name,
-            Phone = ticket.Phone,
-            CompanyName = com.Name,
-            CompanyId = com.Oid,
-            SubCategoryName = sc.Name,
-            StateName = st.Name,
-            TypeTiketName = tt.Name,
-            PlatformName = pl.Name,
-            PlatformId = pl.Oid,
-            WorkSpaceName = ticket.WorkSpace.Name,
-            UserName = user.Name,
-            UserId = user.Oid,
-            PreorityName = pr.Name,
-            DataPhone = ticket.DataPhone,
-            ResaultPhone = ticket.ResaultPhone,
-            DateSecondPhone = ticket.DateSecondPhone,
-            BugNumber = ticket.BugNumber,
-            BugTransfer = ticket.BugTransfer,
-            ModeId = md.Oid,
-            ModeName = md.Name,
-            DataCreted = ticket.DataCreted,
-            DueDate = ticket.DueDate ?? DateTime.UtcNow,
-        };
-        await _hub.Clients.All.SendAsync("NewTicketCreated", resault);
-
-        //   return CreatedAtAction("GetTiketById", new { id = ticket.Id }, resault);
-        return Ok(resault);
     }
 
     [HttpGet("GetTicketById")]
@@ -211,7 +210,6 @@ public class TiketController : ControllerBase
             tiket.Description = dto.Description;
             tiket.Author = au;
             tiket.Category = cat;
-            tiket.Phone = dto.Phone;
             tiket.Company = com;
             tiket.SubCategory = sc;
             tiket.State = st;
@@ -220,12 +218,10 @@ public class TiketController : ControllerBase
             tiket.WorkSpace = wp;
             tiket.User = user;
             tiket.Preorety = pr;
-            tiket.DataPhone = dto.DataPhone;
-            tiket.ResaultPhone = dto.ResaultPhone;
-            tiket.DateSecondPhone = dto.DateSecondPhone;
             tiket.BugNumber = dto.BugNumber;
             tiket.BugTransfer = dto.BugTransfer;
             tiket.Mode = md;
+            tiket.DataModefire = DateTime.Now;
             tiket.DataCreted = dto.DataCreted;
             tiket.IsActive = dto.IsActive;
 
@@ -472,43 +468,65 @@ public class TiketController : ControllerBase
 
     private T GetOrFail<T>(UnitOfWork uow, int id, string entityName) where T : XPObject
     {
+        _logger.LogInformation("GetOrFail: ищем {EntityName} с Oid={Id}", entityName, id);
+
         var entity = uow.Query<T>().FirstOrDefault(e => e.Oid == id);
         if (entity == null)
+        {
+            _logger.LogWarning("GetOrFail: {EntityName} с Oid={Id} не найден", entityName, id);
             throw new KeyNotFoundException($"{entityName} не найден");
+        }
         return entity;
     }
 
 
     private TiketResponseDto ToDto(Tiket t) => new TiketResponseDto
     {
+       
         Id = t.Oid,
         Title = t.Title ?? string.Empty,
         Description = t.Description ?? string.Empty,
         AuthorId = t.Author != null ? t.Author.Oid : 0,
         AuthorName = t.Author != null ? t.Author.Name : string.Empty,
+        CategoryId = t.Category != null ? t.Category.Oid : 0,
         CategoryName = t.Category != null ? t.Category.Name : string.Empty,
-        Phone = t.Phone ?? string.Empty,
         CompanyId = t.Company != null ? t.Company.Oid : 0,
         CompanyName = t.Company != null ? t.Company.Name : string.Empty,
+        SubCategoryId = t.SubCategory != null ? t.SubCategory.Oid : 0,
         SubCategoryName = t.SubCategory != null ? t.SubCategory.Name : string.Empty,
         StateName = t.State != null ? t.State.Name : string.Empty,
         StateId = t.State != null ? t.State.Oid : 0,
         TypeTiketName = t.TypeTiket != null ? t.TypeTiket.Name : string.Empty,
+        TypeTiketId = t.TypeTiket != null ? t.TypeTiket.Oid : 0,
         PlatformId = t.Platform != null ? t.Platform.Oid : 0,
         PlatformName = t.Platform != null ? t.Platform.Name : string.Empty,
+        WorkSpaceId = t.WorkSpace != null ? t.WorkSpace.Oid : 0,
         WorkSpaceName = t.WorkSpace != null ? t.WorkSpace.Name : string.Empty,
         UserId = t.User != null ? t.User.Oid : 0,
         UserName = t.User != null ? t.User.Name : string.Empty,
+        PreorityId = t.Preorety != null ? t.Preorety.Oid : 0,
         PreorityName = t.Preorety != null ? t.Preorety.Name : string.Empty,
-        DataPhone = t.DataPhone,
-        ResaultPhone = t.ResaultPhone,
-        DateSecondPhone = t.DateSecondPhone,
         BugNumber = t.BugNumber ?? string.Empty,
         BugTransfer = t.BugTransfer,
+        ModeId = t.Mode != null ? t.Mode.Oid : 0,
         ModeName = t.Mode != null ? t.Mode.Name : string.Empty,
         DataCreted = t.DataCreted,
         DataModefire = t.DataModefire,
         DueDate = t.DueDate ?? DateTime.UtcNow,
+
+        Phones = t.Phones.Select(p => new TicketPhoneResponseDto
+        {
+            Id = p.Oid,
+            TicketId = p.Ticket.Oid != null ? p.Ticket.Oid : 0,
+            UserId = p.User != null ? p.User.Oid : 0,
+            UserName = p.User != null ? p.User.Name : string.Empty,
+            ResultPhoneName = p.PhoneResults != null ? p.PhoneResults.Name : string.Empty,
+            ResultPhoneOid = p.PhoneResults != null ? p.PhoneResults.Oid : 0,
+            Phone = p.Phone ?? string.Empty,
+            DataCreated = p.DataCreated,
+            IsActive = p.IsActive,
+            Comment = p.Comment ?? string.Empty
+        }).ToList(),
 
         Files = t.Files.Select(f => new TiketFileDto
         {

@@ -40,7 +40,9 @@ public class EmailSenderBackgroundService: BackgroundService
                             new List<string> { email.To },
                             email.Subject,
                             email.Body,
-                            email.IsHtml
+                            email.IsHtml,
+                            email.MessageIdHeader,
+                            email.ThreadAnchorId
                         );
 
                         email.IsSent = true;

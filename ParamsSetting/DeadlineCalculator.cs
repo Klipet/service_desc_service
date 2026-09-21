@@ -9,26 +9,32 @@ public class DeadlineCalculator
         _session = session;
     }
 
-    public DateTime Calculate( int deadlineHours)
+    public DateTime Calculate(int deadlineHours)
     {
         var holidays = GetHolidays();
         var schedule = GetSchedule();
 
         var current = DateTime.Now;
         var hoursLeft = deadlineHours;
-
         int safetyCounter = 0;
 
         while (hoursLeft > 0)
         {
             current = current.AddHours(1);
 
-            if (IsWorkingHour(current, holidays, schedule))
-                Console.WriteLine($"Working hour: {current}");
+            bool isWorking = IsWorkingHour(current, holidays, schedule);
+
+            if (isWorking)
+            {
                 hoursLeft--;
+            }
+            else
+            {
+                // Можно раскомментировать, чтобы видеть, почему пропускает
+                // Console.WriteLine($"Skip: {current}");
+            }
 
             safetyCounter++;
-
             if (safetyCounter > 10000)
                 throw new Exception("Infinite loop detected in deadline calculation");
         }

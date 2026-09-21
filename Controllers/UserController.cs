@@ -46,7 +46,7 @@ public class UserController: ControllerBase
                 DateCreated = u.DateCreated,
                 WorkSpaceName = u.WorkSpace.Name,
                 WorkSpaceId = u.WorkSpace.Oid,
-                ApiKey = u.ApiKey,
+            //    ApiKey = u.ApiKey,
                 IsActive = u.IsActive
             }).ToList();
             return Ok(resault);
@@ -124,7 +124,8 @@ public class UserController: ControllerBase
             user.Email = userModel.Email;
             user.FirstName = userModel.FirstName;
             user.Phone = userModel.Phone;
-            user.PasswordHash = userModel.Password;
+            if (!string.IsNullOrEmpty(userModel.Password))
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userModel.Password);
             user.Loghin = userModel.Loghin;
             user.WorkSpace = wp;
             user.IsActive = userModel.IsActive;
@@ -147,7 +148,7 @@ public class UserController: ControllerBase
         var user = _uow.GetObjectByKey<User>(id);
         if (user == null) return NotFound("User not found");
 
-        var wp = _uow.GetObjectByKey<WorkSpace>(user.WorkSpace);
+        var wp = _uow.GetObjectByKey<WorkSpace>(user.WorkSpace.Oid);
         if (wp == null)
             return NotFound("Пользователь не найден");
         try
@@ -164,7 +165,7 @@ public class UserController: ControllerBase
                 Loghin = user.Loghin,
                 WorkSpaceName = wp.Name,
                 DateCreated = user.DateCreated,
-                ApiKey = user.ApiKey,
+             //   ApiKey = user.ApiKey,
                 IsActive = user.IsActive,
 
             };
@@ -188,12 +189,23 @@ public class UserController: ControllerBase
             return Unauthorized("Invalid credentials");
         if(user.IsActive == false)
             return Unauthorized("User is dezactivate");
-       
+
+
+        // Безопасное получение permissions
+        var permissions = user.RoleUser?.RolePermissions?
+            .Where(rp => rp.Permission != null && rp.Permission.IsActive)
+            .Select(rp => new
+            {
+                id = rp.Permission.Oid,
+                name = rp.Permission.Name
+            })
+            .ToList();
 
         try
         {
             user.ApiKey = ApiKeyGenerator.Generate();
             _uow.CommitChanges();
+
             return Ok(new
             {
                 status = 200,
@@ -204,14 +216,7 @@ public class UserController: ControllerBase
                     name = user.Name,
                     email = user.Email,
                     login = user.Loghin,
-                    permissions = user.RoleUser?.RolePermissions
-                    .Where(rp => rp.Permission != null && rp.Permission.IsActive)
-                    .Select(rp => new
-                    {
-                      
-                        id = rp.Permission.Oid,
-                        name = rp.Permission.Name
-                    }) ?? Enumerable.Empty<object>()
+                    permissions = permissions
                 }
             });
         }

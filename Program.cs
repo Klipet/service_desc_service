@@ -1,12 +1,12 @@
 ﻿using DevExpress.Xpo;
 using DevExpress.Xpo.DB;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Web;
 
 public class Program
 {
-   
     public static void Main(string[] args)
     {
         try
@@ -17,24 +17,49 @@ public class Program
 
 
             var core = new Core(builder.Configuration);
-        //    if (!core.InitializeConnection())
-        //    {
-        //        Console.WriteLine("[FATAL] Cannot start application: database connection failed.");
-        //        return;
-         //   }
+            // if (args.Contains("--migrate"))
+            // {
+            //     var connectionString = new ConfigurationBuilder()
+            //         .AddJsonFile("appsettings.json", optional: true)
+            //         .AddEnvironmentVariables()
+            //         .Build()
+            //         .GetConnectionString("DefaultConnection")
+            //         ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
+            //
+            //     MyXPO.ConnectionString = connectionString;
+            //     MyXPO.UpdateDataBase();
+            //     Console.WriteLine("[Migrator] Schema updated.");
+            //     var runner = new MigrationRunner();
+            //     runner.Run();
+            //     Console.WriteLine("[Migrator] Done.");
+            //     return;
+            // }
+
+            var connectionString = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build()
+                .GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection не задана");
+
+            MyXPO.ConnectionString = connectionString;
+            MyXPO.UpdateDataBase();
+            Console.WriteLine("[Migrator] Schema updated.");
+
             core.InitializeConnection();
 
             builder.Services.AddScoped(provider => MyXPO.GetNewUnitOfWork());
+
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
-
+          
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:8080", "http://localhost:5000") // ← порты твоего Flutter Web
+                    policy.WithOrigins("http://localhost:8080", "http://localhost:5000", "https://dev-servicedesk.edi.md") // ← порты твоего Flutter Web
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials(); // ← обязательно для SignalR
@@ -49,6 +74,8 @@ public class Program
             builder.Services.AddHostedService<EmailBackgroundService>();
             builder.Services.AddHostedService<EmailSenderBackgroundService>();
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+
+
 
             builder.Services.AddSignalR();
 
@@ -66,6 +93,7 @@ public class Program
 
 
             builder.Services.AddSwaggerGen();
+
             builder.Services.AddSwaggerGen(options =>
             {
                 options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
@@ -93,22 +121,58 @@ public class Program
             });
             builder.Services.AddSingleton<S3Service>();
             builder.WebHost.UseUrls("http://0.0.0.0:5000");
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
+                options.Limits.MinRequestBodyDataRate = null;
+            });
+
+
+
             var app = builder.Build();
 
-            app.UseCors();
-            app.MapHub<TicketHub>("/ticketHub");
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/json";
 
-            using var uow = MyXPO.GetNewUnitOfWork();
-            EmptyDataDB.SendData(uow);
+                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    var exception = exceptionHandlerPathFeature?.Error;
+
+                    // добавьте логирование, иначе ошибка нигде не фиксируется
+                    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(exception, "Unhandled exception on {Path}", context.Request.Path);
+
+                    var response = new
+                    {
+                        message = "Internal server error",
+                        detail = exception?.Message,
+                        stackTrace = exception?.StackTrace,
+                        type = exception?.GetType().Name
+                    };
+
+                    await context.Response.WriteAsJsonAsync(response);
+                });
+            });
+
+            app.UseRouting();
+            app.UseCors();
+            app.UseWebSockets();
+
             app.UseSwagger();
             app.UseSwaggerUI();
 
-            //    app.UseHttpsRedirection();
             app.UseMiddleware<ApiKeyMiddleware>();
             app.UseAuthorization();
+
+            app.MapHub<TicketHub>("/ticketHub");
             app.MapControllers();
+           
             app.Run();
-        }catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Console.WriteLine($"DI Error: {ex.InnerException?.Message ?? ex.Message}");
             throw;

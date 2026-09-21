@@ -5,16 +5,28 @@ using System;
 public class ApiKeyMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public ApiKeyMiddleware(RequestDelegate next)
+    public ApiKeyMiddleware(RequestDelegate next, IServiceScopeFactory scopeFactory)
     {
         _next = next;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        string? apiKey = null;
-        // Публичные эндпоинты пропускаем
+        using var scope = _scopeFactory.CreateScope();
+        var uow = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
+
+        var path = context.Request.Path;
+
+        if (path.StartsWithSegments("/ticketHub") ||
+            path.StartsWithSegments("/swagger"))
+        {
+            await _next(context);
+            return;
+        }
+
         var endpoint = context.GetEndpoint();
         var isPublic = endpoint?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null;
         if (isPublic)
@@ -23,7 +35,7 @@ public class ApiKeyMiddleware
             return;
         }
 
-        // Читаем ApiKey из заголовка
+        string? apiKey = null;
         if (context.Request.Headers.TryGetValue("X-API-KEY", out var headerKey))
         {
             apiKey = headerKey.ToString();
@@ -39,28 +51,35 @@ public class ApiKeyMiddleware
             await context.Response.WriteAsJsonAsync(new { error = "API key missing" });
             return;
         }
-        // Ищем пользователя по ApiKey
-        using var uow = MyXPO.GetNewUnitOfWork();
-        var user = uow.Query<User>()
-            .FirstOrDefault(u => u.ApiKey == apiKey.ToString());
 
-        if (user == null)
+        try
         {
-            context.Response.StatusCode = 401;
-            await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
+            // ✅ Используйте инжектированный UoW вместо GetNewUnitOfWork()
+            var user = uow.Query<User>()
+                .FirstOrDefault(u => u.ApiKey == apiKey);
+
+            if (user == null)
+            {
+                context.Response.StatusCode = 401;
+                await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
+                return;
+            }
+
+            if (user.RoleUser == null || !user.RoleUser.IsActive)
+            {
+                context.Response.StatusCode = 403;
+                await context.Response.WriteAsJsonAsync(new { error = "User role is inactive" });
+                return;
+            }
+
+            context.Items["CurrentUser"] = user;
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsJsonAsync(new { error = "Internal server error" });
             return;
         }
-
-        // Проверяем что роль активна
-        if (user.RoleUser == null || !user.RoleUser.IsActive)
-        {
-            context.Response.StatusCode = 403;
-            await context.Response.WriteAsJsonAsync(new { error = "User role is inactive" });
-            return;
-        }
-
-        // Кладём пользователя в контекст
-        context.Items["CurrentUser"] = user;
 
         await _next(context);
     }

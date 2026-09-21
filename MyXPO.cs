@@ -2,6 +2,7 @@
 using DevExpress.Data.Filtering;
 using DevExpress.Xpo;
 using DevExpress.Xpo.DB;
+using DevExpress.Xpo.Logger;
 using DevExpress.Xpo.Metadata;
 using System.Data;
 
@@ -54,7 +55,7 @@ public class MyXPO
             }
             catch (Exception ex)
             {
-                //LogManager.WriteException(ex);
+              //  LogManager.(ex);
             }
         }
     }
@@ -69,12 +70,12 @@ public class MyXPO
         {
             if (_dataStore == null)
             {
-                _dataStore = CreateDataStore(ConnectionString, AutoCreateOption.SchemaAlreadyExists);
+                _dataStore = CreateDataStore(ConnectionString, AutoCreateOption.DatabaseAndSchema);
             }
 
             if (_dataLayer == null)
             {
-                _dataLayer = CreateDataLayer(_dataStore, AutoCreateOption.SchemaAlreadyExists);
+                _dataLayer = CreateDataLayer(_dataStore, AutoCreateOption.DatabaseAndSchema);
             }
         }
 
@@ -126,36 +127,30 @@ public class MyXPO
         DevExpress.Xpo.XpoDefault.Session = null;
         DevExpress.Xpo.XpoDefault.DataLayer = null;
 
-        if (autoCreateOption == AutoCreateOption.DatabaseAndSchema)
+        if (dict == null)
         {
-            return XpoDefault.GetDataLayer(ConnectionString, AutoCreateOption.DatabaseAndSchema);
-        }
-        else
-        {
-            if (dict == null)
+            using (var session = new Session())
             {
-                using (var session = new Session())
-                {
-                    session.ConnectionString = ConnectionString;
-                    session.AutoCreateOption = autoCreateOption;
-                    session.Connect();
-                    dict = session.Dictionary;
-                }
-
-                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                dict.GetDataStoreSchema(assemblies);
+                session.ConnectionString = ConnectionString;
+                session.AutoCreateOption = autoCreateOption;
+                session.Connect();
+                dict = session.Dictionary;
             }
 
-            return new DevExpress.Xpo.ThreadSafeDataLayer(dict, dataStore);
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            dict.GetDataStoreSchema(assemblies);
         }
+
+        return new DevExpress.Xpo.ThreadSafeDataLayer(dict, dataStore);
     }
 
     // Method to update the database
     public static void UpdateDataBase()
     {
         var dict = new ReflectionDictionary();
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-        dict.GetDataStoreSchema(typeof(EmptyDataDB).Assembly);
+        dict.GetDataStoreSchema(assemblies);
         var connectionString = ConnectionString?.Replace("XpoDataStorePool=True;", "");
         var dataStore = CreateDataStore(
             connectionString,

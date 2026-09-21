@@ -3,10 +3,6 @@
     public int Id { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
-    public string Phone { get; set; } = string.Empty;
-    public DateTime DataPhone { get; set; } = DateTime.Now;
-    public bool ResaultPhone { get; set; }
-    public DateTime DateSecondPhone { get; set; }
     public string BugNumber { get; set; }
     public bool BugTransfer { get; set; }
     public DateTime DataCreted { get; set; }
@@ -56,7 +52,7 @@
     public string CompanyName { get; set; } = string.Empty;
     public int CompanyId { get; set; }
     public DateTime DueDate { get; set; }
-
+    public List<TicketPhoneResponseDto> Phones { get; set; } = new();
     public List<TiketFileDto> Files { get; set; } = new();
     public List<TiketSolutionDto> Solution { get; set; } = new();
     public List<TiketMessageResponseDto> Message { get; set; } = new();
@@ -64,18 +60,17 @@
 
 public class TiketPostDto
 {
-    public int Id { get; set; }
+    public int? Id { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
-    public string Phone { get; set; }
-    public DateTime DataPhone { get; set; }
-    public bool ResaultPhone { get; set; }
-    public DateTime DateSecondPhone { get; set; }
+    public DateTime? DateSecondPhone { get; set; }
     public string BugNumber { get; set; }
     public bool BugTransfer { get; set; }
     public DateTime DataCreted { get; set; }
     public DateTime DataModefire { get; set; }
 
+    //phones
+    public int PhoneId { get; set; }
     // User
     public int UserId { get; set; }  // ← для получения от клиента
     //workSpace

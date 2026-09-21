@@ -50,15 +50,22 @@ public class TiketSolutionController: ControllerBase
         };
         _uow.CommitChanges();
 
-        // 🔥 вызываем сервис очереди
-        var emailService = new EmailQueueService(_uow);
-
-        emailService.EnqueueTicketAnswer(
-            tiket,
-            user,
-            solution.MessageText,
-            model.EmailList
-            );
+        // Решение уже сохранено — падать после этого нельзя. Постановка
+        // письма в очередь на отправку клиенту не должна валить весь ответ.
+        try
+        {
+            var emailService = new EmailQueueService(_uow);
+            emailService.EnqueueTicketAnswer(
+                tiket,
+                user,
+                solution.MessageText,
+                model.EmailList
+                );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TiketSolution] Не удалось поставить письмо в очередь: {ex.Message}");
+        }
 
         var resault = new TiketSolutionDto
         {

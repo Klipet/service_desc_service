@@ -16,6 +16,21 @@ public class EmptyDataDB
             new State(uow) { Name = "Новая заявка" };
             
         }
+        if (!uow.Query<WorkSchedule>().Any())
+        {
+
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = true };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = false };
+            new WorkSchedule(uow) { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsWorkingDay = false };
+
+        };
+
+ 
+
         if (!uow.Query<Preority>().Any())
         {
             new Preority(uow) { Name = "Низкий" };
@@ -58,6 +73,13 @@ public class EmptyDataDB
             
         }
 
+        if (!uow.Query<PhoneResult>().Any())
+        {
+            new PhoneResult(uow) { Name = "Занят", Active = true, DateCreated = DateTime.Now, };
+            new PhoneResult(uow) { Name = "Успешно", Active = true, DateCreated = DateTime.Now, };
+            new PhoneResult(uow) { Name = "Без ответа", Active = true, DateCreated = DateTime.Now, };
+        }
+
         if (!uow.Query<Platform>().Any())
         {
             new Platform(uow) { Name = "Нормальный" };
@@ -80,6 +102,13 @@ public class EmptyDataDB
         {
             new Mode(uow) { Name = "Нормальный" };
         
+        }
+        if (!uow.Query<Phone>().Any())
+        {
+            new Phone(uow) { Number = "079000000" };
+            new Phone(uow) { DataCreated = DateTime.Now };
+            var author = uow.Query<Author>().FirstOrDefault(p => p.Oid == 1);
+            new Phone(uow) { Author = author };
         }
 
         if (!uow.Query<HolidayDay>().Any())

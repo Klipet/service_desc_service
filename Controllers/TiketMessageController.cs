@@ -106,20 +106,29 @@ public class TiketMessageController: ControllerBase
             IsRead = true,
             IsUser = true,
             MessageText = model.MessageText,
-            CreatedAt= DateTime.Now,
+            EmailMessageId= model.MailMessageId,
+            CreatedAt = DateTime.Now,
         };
 
         _uow.CommitChanges();
-        var emailService = new EmailQueueService(_uow);
 
-        emailService.EnqueueTicketAnswer(
-            tiket,
-            autor,
-            
-            message.MessageText,
-            model.Email
-            );
-
+        // Сообщение уже сохранено — падать после этого нельзя. Постановка
+        // письма в очередь на отправку клиенту не должна валить весь ответ
+        // (например, если ещё не создан ни один активный EmailTemplate).
+        try
+        {
+            var emailService = new EmailQueueService(_uow);
+            emailService.EnqueueTicketAnswer(
+                tiket,
+                autor,
+                message.MessageText,
+                model.Email
+                );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TiketMessage] Не удалось поставить письмо в очередь: {ex.Message}");
+        }
 
         return Ok(new TiketMessageResponseDto
         {

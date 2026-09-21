@@ -10,5 +10,4 @@ public class WorkSpace: BaseEntity
     [Association("WorkSpace-Tikets")]
     public XPCollection<Tiket> Tikets => GetCollection<Tiket>(nameof(Tikets));
 
-  
 }

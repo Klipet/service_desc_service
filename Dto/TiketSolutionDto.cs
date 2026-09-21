@@ -7,7 +7,7 @@
     public string MessageText { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsVisible { get; set; }
-    public string MailMessageId { get; set; }
+    public string? MailMessageId { get; set; }
     public List<string> EmailList { get; set; } = new List<string>();
 }
 public class TiketSolutionDtoResponse

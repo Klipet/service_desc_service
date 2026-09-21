@@ -2,64 +2,149 @@
 
 public class SettingTiket
 {
+    // Сериализует round-robin назначение по workSpaceId в рамках одного
+    // процесса API: без этого два параллельных запроса могут прочитать
+    // одинаковый LastAssignedUser и назначить заявку одному и тому же
+    // сотруднику вместо чередования. Раньше это пытались лочить на уровне БД
+    // (SELECT ... FOR UPDATE / pg_advisory_xact_lock) — оба варианта упали на
+    // особенностях биндинга параметров в XPO ExecuteQuery, поэтому лочим
+    // здесь, в памяти. Работает только если API крутится одним процессом
+    // (нет горизонтального масштабирования на несколько инстансов) —
+    // при масштабировании на несколько подов/процессов нужен будет
+    // распределённый лок (Redis и т.п.).
+    private static readonly object _roundRobinLockRoot = new();
+    private static readonly Dictionary<int, object> _roundRobinLocks = new();
 
-    private static int _lastUserIndex = 0;
-    private static readonly object _lock = new object();
+    private static object GetRoundRobinLock(int workSpaceId)
+    {
+        lock (_roundRobinLockRoot)
+        {
+            if (!_roundRobinLocks.TryGetValue(workSpaceId, out var lockObj))
+            {
+                lockObj = new object();
+                _roundRobinLocks[workSpaceId] = lockObj;
+            }
+            return lockObj;
+        }
+    }
+
     public static User GetUserByLoad(UnitOfWork uow, int workSpaceId)
     {
         var users = uow.Query<User>()
             .Where(u => u.WorkSpace.Oid == workSpaceId)
             .ToList();
-        Console.WriteLine($"User: {users.Count}");
+
+        Console.WriteLine($"[GetUserByLoad] Найдено пользователей: {users.Count}");
+
         if (!users.Any()) return null;
 
-        // Считаем нагрузку явно через запрос к тикетам
         var userLoad = users.Select(u => new
         {
             User = u,
             Load = uow.Query<Tiket>().Count(t => t.User.Oid == u.Oid && t.State.Oid == 1)
         }).ToList();
 
-        // Лог чтобы видеть нагрузку каждого
         foreach (var item in userLoad)
         {
-            Console.WriteLine($"User: {item.User.Name}, Load: {item.Load}");
+            Console.WriteLine($"[GetUserByLoad] User: {item.User.Name} (Oid={item.User.Oid}), Load: {item.Load}");
         }
 
-        return userLoad
-            .OrderBy(x => x.Load)
-            .First()
-            .User;
+        var result = userLoad.OrderBy(x => x.Load).First().User;
+        Console.WriteLine($"[GetUserByLoad] Выбран: {result.Name} (Oid={result.Oid})");
+        return result;
     }
+
     public static User GetUserRoundRobin(UnitOfWork uow, int workSpaceId)
     {
-        var users = uow.Query<User>()
-            .Where(u => u.WorkSpace.Oid == workSpaceId)
-            .OrderBy(u => u.Oid)
-            .ToList();
+        lock (GetRoundRobinLock(workSpaceId))
+        {
+        uow.BeginTransaction();
+        try
+        {
+            var workSpace = uow.GetObjectByKey<WorkSpace>(workSpaceId);
+            if (workSpace == null)
+            {
+                uow.RollbackTransaction();
+                return null;
+            }
 
-        if (!users.Any()) return null;
+            var state = uow.Query<RoundRobinState>()
+                .FirstOrDefault(s => s.WorkSpace.Oid == workSpaceId);
 
-        var lastTicket = uow.Query<Tiket>()
-            .Where(t => t.WorkSpace.Oid == workSpaceId) // только в этом воркспейсе
-            .OrderByDescending(t => t.Oid)
-            .FirstOrDefault();
+            if (state == null)
+            {
+                state = new RoundRobinState(uow) { WorkSpace = workSpace };
+                state.Save();
+                uow.CommitChanges();
+            }
 
-        // Если тикетов ещё нет — назначаем первого
-        if (lastTicket == null)
-            return users.First();
+            var users = uow.Query<User>()
+                .Where(u => u.WorkSpace.Oid == workSpaceId && u.IsActive)
+                .OrderBy(u => u.Oid)
+                .ToList();
 
-        var lastIndex = users.FindIndex(u => u.Oid == lastTicket.User.Oid);
+            if (!users.Any())
+            {
+                uow.RollbackTransaction();
+                return null;
+            }
 
-        // Если пользователь не найден в списке — назначаем первого
-        if (lastIndex == -1)
-            return users.First();
+            // Считаем тикеты, созданные сегодня, по каждому сотруднику воркспейса
+            var todayStart = DateTime.Today;
+            var todayEnd = todayStart.AddDays(1);
 
-        var nextIndex = (lastIndex + 1) % users.Count;
-        var user = users[nextIndex];
+            var todayLoad = uow.Query<Tiket>()
+                .Where(t => t.User != null
+                         && t.User.WorkSpace.Oid == workSpaceId
+                         && t.DataCreted >= todayStart
+                         && t.DataCreted < todayEnd)
+                .GroupBy(t => t.User.Oid)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionary(x => x.UserId, x => x.Count);
 
-        Console.WriteLine($"Назначен: {user.Name}");
-        return user;
+            int Load(User u) => todayLoad.TryGetValue(u.Oid, out var c) ? c : 0;
+
+            var minLoad = users.Min(Load);
+            // Кандидаты — только те, у кого сегодня минимум заявок.
+            // Round-robin работает уже внутри этой группы, а не по всем users,
+            // иначе сотрудник с 0 заявками мог бы пропускаться курсором.
+            var candidates = users.Where(u => Load(u) == minLoad).ToList();
+
+            User selected;
+            var lastUserOid = state.LastAssignedUser?.Oid;
+
+            if (lastUserOid == null)
+            {
+                selected = candidates.First();
+            }
+            else
+            {
+                var lastIndexInCandidates = candidates.FindIndex(u => u.Oid == lastUserOid);
+
+                if (lastIndexInCandidates == -1)
+                {
+                    // Последний назначенный не входит в группу с минимальной нагрузкой
+                    // (у него уже больше заявок, чем у остальных) — просто берём первого кандидата
+                    selected = candidates.First();
+                }
+                else
+                {
+                    var nextIndex = (lastIndexInCandidates + 1) % candidates.Count;
+                    selected = candidates[nextIndex];
+                }
+            }
+
+            state.LastAssignedUser = selected;
+            state.Save();
+            uow.CommitTransaction();
+
+            return selected;
+        }
+        catch
+        {
+            uow.RollbackTransaction();
+            throw;
+        }
+        }
     }
-
 }

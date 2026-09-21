@@ -20,7 +20,10 @@ public class EmailTemplateService
                 (t.State == null || t.State.Oid == tiket.State.Oid));
 
         if (template == null)
+        {
+            Console.WriteLine($"Template not found for State={tiket.State?.Oid}, Tiket={tiket.Oid}");
             throw new Exception("Template not found");
+        }
 
         var subject = Replace(template.SubjectTemplate, values);
         var body = Replace(template.BodyHtmlTemplate, values);

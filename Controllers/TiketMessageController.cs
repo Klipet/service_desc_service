@@ -106,7 +106,8 @@ public class TiketMessageController: ControllerBase
             IsRead = true,
             IsUser = true,
             MessageText = model.MessageText,
-            CreatedAt= DateTime.Now,
+            EmailMessageId= model.MailMessageId,
+            CreatedAt = DateTime.Now,
         };
 
         _uow.CommitChanges();

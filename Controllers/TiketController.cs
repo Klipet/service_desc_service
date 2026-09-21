@@ -130,6 +130,19 @@ public class TiketController : ControllerBase
             {
                 return StatusCode(500, $"Error saving to database: {ex.Message}");
             }
+
+            if (!isEditing)
+            {
+                try
+                {
+                    new EmailQueueService(_uow).EnqueueTicketAnswer(ticket, user, ticket.Description, new List<string>());
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Не удалось поставить письмо в очередь для тикета {Id}", ticket.Oid);
+                }
+            }
+
             var resault = ToDto(ticket);
             await _hub.Clients.All.SendAsync(isEditing ? "TicketUpdated" : "NewTicketCreated", resault);
             return Ok(resault);

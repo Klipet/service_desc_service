@@ -202,9 +202,16 @@ public class TiketFromEmail
 
         }
 
-
-
         uow.CommitChanges();
+
+        try
+        {
+            new EmailQueueService(uow).EnqueueTicketAnswer(tiket, null, tiket.Description, new List<string>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не удалось поставить письмо в очередь для тикета {Id}", tiket.Oid);
+        }
 
         return new TiketEmailServiceDto
         {

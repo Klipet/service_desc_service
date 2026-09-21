@@ -15,7 +15,9 @@ public class EmailSenderService
     List<string> toList,
     string subject,
     string body,
-    bool isHtml = true)
+    bool isHtml = true,
+    string messageId = null,
+    string threadAnchorId = null)
     {
         using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
         {
@@ -35,6 +37,18 @@ public class EmailSenderService
 
         foreach (var to in toList)
             message.To.Add(to);
+
+        // Свой Message-ID (и якорь треда в References/In-Reply-To) — иначе
+        // id генерит SMTP-сервер сам, и его нельзя сопоставить обратно
+        // с Tiket.MessageId, когда клиент отвечает на письмо.
+        if (!string.IsNullOrEmpty(messageId))
+            message.Headers.Add("Message-ID", messageId);
+
+        if (!string.IsNullOrEmpty(threadAnchorId))
+        {
+            message.Headers.Add("References", threadAnchorId);
+            message.Headers.Add("In-Reply-To", threadAnchorId);
+        }
 
         await client.SendMailAsync(message);
     }
